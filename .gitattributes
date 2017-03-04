@@ -1,0 +1,2 @@
+/Users/ludwig/Code/cs224n-project/data/nips-papers/titles_and_abstracts.pb2 filter=lfs diff=lfs merge=lfs -text
+/Users/ludwig/Code/cs224n-project/data/nips-papers/vocab filter=lfs diff=lfs merge=lfs -text
