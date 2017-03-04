@@ -1,6 +1,5 @@
 # Data Sets
 
-data/nips-papers/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
