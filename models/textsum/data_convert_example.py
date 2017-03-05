@@ -16,6 +16,8 @@ import sqlite3
 import collections
 import re
 
+from nltk.tokenize import sent_tokenize
+
 FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string('db', '', 'path to db file')
 tf.app.flags.DEFINE_string('out_file', '', 'path to output file')
@@ -32,12 +34,16 @@ def _extract_from_sqlite():
   results = cursor.fetchall()
   writer = open(FLAGS.out_file, 'wb')
   for result in results:
+    # tokenize etc
+    title = '<d><p><s>' + result[0] + '</s></p></d>'
+    body = result[1].decode('utf8').replace('\n', ' ').replace('\t', ' ')
+    sentences = sent_tokenize(body)
+    body = '<d><p>' + ' '.join(['<s>' + sentence + '</s>' for sentence in sentences]) + '</p></d>'
+    body = body.encode('utf8')
+    # create and serialize tf_example object
     tf_example = example_pb2.Example()
-    for index, feature in enumerate(features):
-      result = map(lambda x: x.lower(), result)
-      tf_example.features.feature[feature].bytes_list.value.extend([str(result[index])])
-      words = re.split('[^a-zA-Z]', " ".join(result))
-      counter.update(words)
+    tf_example.features.feature['article'].bytes_list.value.extend([str(body)])
+    tf_example.features.feature['abstract'].bytes_list.value.extend([str(title)])
     tf_example_str = tf_example.SerializeToString()
     str_len = len(tf_example_str)
     writer.write(struct.pack('q', str_len))
