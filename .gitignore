@@ -1,5 +1,11 @@
 # Data Sets
 
+data/nips-papers/authors.csv
+data/nips-papers/database.sqlite
+data/nips-papers/paper_authors.csv
+data/nips-papers/paper_titles_and_abstracts.csv
+data/nips-papers/papers.csv
+data/nips-papers/select_titles_and_abstracts.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
