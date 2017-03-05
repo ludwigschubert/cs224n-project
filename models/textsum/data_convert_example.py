@@ -35,11 +35,14 @@ def _extract_from_sqlite():
   writer = open(FLAGS.out_file, 'wb')
   for result in results:
     # tokenize etc
-    title = '<d><p><s>' + result[0] + '</s></p></d>'
+    title = '<d><p><s>' + result[0].lower() + '</s></p></d>'
     body = result[1].decode('utf8').replace('\n', ' ').replace('\t', ' ')
     sentences = sent_tokenize(body)
-    body = '<d><p>' + ' '.join(['<s>' + sentence + '</s>' for sentence in sentences]) + '</p></d>'
+    body = '<d><p>' + ' '.join(['<s>' + sentence.lower() + '</s>' for sentence in sentences]) + '</p></d>'
     body = body.encode('utf8')
+    words = " ".join(result).lower().split()
+    counter.update(words)
+
     # create and serialize tf_example object
     tf_example = example_pb2.Example()
     tf_example.features.feature['article'].bytes_list.value.extend([str(body)])
