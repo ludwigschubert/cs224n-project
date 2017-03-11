@@ -1,0 +1,10 @@
+80-10-10 randomized split resulting in:
+
+$ cat data.json | grep \"train\" | wc -l
+> 2590
+
+$ cat data.json | grep \"dev\" | wc -l
+> 351
+
+$ cat data.json | grep \"test\" | wc -l
+> 302

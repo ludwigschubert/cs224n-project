@@ -1,20 +1,22 @@
+# needs python 3.6. sorry
+
 import struct
 import sys
 import json
+import random
 
 import sqlite3
 import collections
 import re
-import random
 
 from nltk.tokenize import sent_tokenize
-random.seed(122956419)
+random.seed(401986418)
 
 def _extract_from_sqlite():
   conn = sqlite3.connect("../sources/nips-papers/database.sqlite")
   cursor = conn.cursor()
   counter = collections.Counter()
-  select = "SELECT title, abstract FROM papers WHERE abstract != 'Abstract Missing';"
+  select = "SELECT abstract, paper_text FROM papers WHERE abstract != 'Abstract Missing';"
   cursor.execute(select)
   results = cursor.fetchall()
   writer = open("data.json", 'w')
@@ -22,7 +24,7 @@ def _extract_from_sqlite():
   for result in results:
     writer.write("  ") # indent
     # tokenize etc
-    title = '<d><p><s>' + result[0].lower() + '</s></p></d>'
+    abstract = '<d><p><s>' + result[0].lower() + '</s></p></d>'
     body = result[1].replace('\n', ' ').replace('\t', ' ')
     sentences = sent_tokenize(body)
     body = '<d><p>' + ' '.join(['<s>' + sentence.lower() + '</s>' for sentence in sentences]) + '</p></d>'
@@ -31,7 +33,7 @@ def _extract_from_sqlite():
     # create and serialize tf_example object
     example = {}
     example['data'] = str(body)
-    example['label'] = [str(title)]
+    example['label'] = [str(abstract)]
     example['set'] = random.choices(['train', 'dev', 'test'], weights=[80, 10, 10])[0]
     writer.write(json.dumps(example))
     writer.write(",\n")
