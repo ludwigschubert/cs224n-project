@@ -42,7 +42,6 @@ def _extract_from_sqlite():
     body = body.encode('utf8')
     words = " ".join(result).lower().split()
     counter.update(words)
-
     # create and serialize tf_example object
     tf_example = example_pb2.Example()
     tf_example.features.feature['article'].bytes_list.value.extend([str(body)])
