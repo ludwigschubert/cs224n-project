@@ -7,13 +7,14 @@ import collections
 import re
 import random
 
-from nltk.tokenize import sent_tokenize
+from nltk.tokenize import sent_tokenize, word_tokenize
 random.seed(122956419)
 
 def tokenize_body(text):
-  document = text.replace('\n', ' ').replace('\t', ' ')
+  document = text.replace('-\n', '').replace('- \n', ' ').replace('\n', ' ').replace('\t', ' ')
   sentences = sent_tokenize(document)
-  return '<d><p>' + ' '.join(['<s>' + sentence.lower() + '</s>' for sentence in sentences]) + '</p></d>'
+  result =  '<d><p>' + ' '.join(['<s>' + ' '.join(word_tokenize(sentence)).lower() + '</s>' for sentence in sentences]) + '</p></d>'
+  return result
 
 def _extract_from_sqlite():
   conn = sqlite3.connect("../sources/nips-papers/database.sqlite")

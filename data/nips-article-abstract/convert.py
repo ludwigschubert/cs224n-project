@@ -9,8 +9,14 @@ import sqlite3
 import collections
 import re
 
-from nltk.tokenize import sent_tokenize
+from nltk.tokenize import sent_tokenize, word_tokenize
 random.seed(401986418)
+
+def tokenize_body(text):
+  document = text.replace('-\n', '').replace('- \n', ' ').replace('\n', ' ').replace('\t', ' ')
+  sentences = sent_tokenize(document)
+  result =  '<d><p>' + ' '.join(['<s>' + ' '.join(word_tokenize(sentence)).lower() + '</s>' for sentence in sentences]) + '</p></d>'
+  return result
 
 def _extract_from_sqlite():
   conn = sqlite3.connect("../sources/nips-papers/database.sqlite")
@@ -22,10 +28,8 @@ def _extract_from_sqlite():
   dout = []
   for result in results:
     # tokenize etc
-    abstract = '<d><p><s>' + result[0].lower() + '</s></p></d>'
-    body = result[1].replace('\n', ' ').replace('\t', ' ')
-    sentences = sent_tokenize(body)
-    body = '<d><p>' + ' '.join(['<s>' + sentence.lower() + '</s>' for sentence in sentences]) + '</p></d>'
+    abstract = tokenize_body(result[0])
+    body = tokenize_body(result[1])
     words = " ".join(result).lower().split()
     counter.update(words)
     # create and serialize tf_example object
