@@ -2,10 +2,11 @@ import json
 from nltk.tokenize import sent_tokenize, word_tokenize
 
 def tokenize_body(text):
-  document = text.replace('-\n', '').replace('- \n', ' ').replace('\n', ' ').replace('\t', ' ')
-  sentences = sent_tokenize(document)
-  result =  '<d><p>' + ' '.join(['<s>' + ' '.join(word_tokenize(sentence)).lower() + '</s>' for sentence in sentences]) + '</p></d>'
-  return result
+	document = text.replace('-\n', '').replace('- \n', ' ').replace('\n', ' ').replace('\t', ' ')
+	sentences = sent_tokenize(document)
+	result =  '<d> <p> ' + ' '.join(['<s> ' + ' '.join(word_tokenize(sentence)).lower() + ' </s>' for sentence in sentences]) + ' </p> </d>'
+	return result
+
 
 files = ['train-v1.1.json','dev-v1.1.json']
 dataset = {}
@@ -14,7 +15,7 @@ for file in files:
 		dataset[file.split('-')[0]] = json.load(fp)['data']
 
 #dataset['dev'][0]
-#['paragraphs'][0] #['context'] | (['qas'] [0] (['question'] | answers[0] ['text'] 
+#['paragraphs'][0] #['context'] | (['qas'] [0] (['question'] | answers[0] ['text']
 count_t = 0
 count_f = 0
 dout = []
@@ -37,6 +38,6 @@ for key in dataset:
 			if len(labels) >0:
 				dout.append({'data':tokenize_body(context.lower()),'label':labels,'set':key})
 
-print count_t,count_f 
+print count_t,count_f
 with open('data.json','w') as fp:
 	json.dump(dout, fp,sort_keys=True,indent=4, separators=(',', ': '))

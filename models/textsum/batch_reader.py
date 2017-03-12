@@ -30,8 +30,8 @@ ModelInput = namedtuple('ModelInput',
                         'enc_input dec_input target enc_len dec_len '
                         'origin_article origin_abstract')
 
-BUCKET_CACHE_BATCH = 100
-QUEUE_NUM_BATCH = 100
+BUCKET_CACHE_BATCH = 10
+QUEUE_NUM_BATCH = 10
 
 
 class Batcher(object):
@@ -214,7 +214,7 @@ class Batcher(object):
   def _WatchThreads(self):
     """Watch the daemon input threads and restart if dead."""
     while True:
-      time.sleep(60)
+      time.sleep(6)
       input_threads = []
       for t in self._input_threads:
         if t.is_alive():

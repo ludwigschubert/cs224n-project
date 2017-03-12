@@ -7,6 +7,11 @@ data/nips-papers/paper_titles_and_abstracts.csv
 data/nips-papers/papers.csv
 data/nips-papers/select_titles_and_abstracts.sh
 
+# Models
+
+models/textsum/data
+models/textsum/log
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

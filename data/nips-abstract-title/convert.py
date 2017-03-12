@@ -13,7 +13,7 @@ random.seed(122956419)
 def tokenize_body(text):
   document = text.replace('-\n', '').replace('- \n', ' ').replace('\n', ' ').replace('\t', ' ')
   sentences = sent_tokenize(document)
-  result =  '<d><p>' + ' '.join(['<s>' + ' '.join(word_tokenize(sentence)).lower() + '</s>' for sentence in sentences]) + '</p></d>'
+  result =  '<d> <p> ' + ' '.join(['<s> ' + ' '.join(word_tokenize(sentence)).lower() + ' </s>' for sentence in sentences]) + ' </p> </d>'
   return result
 
 def _extract_from_sqlite():
@@ -26,7 +26,7 @@ def _extract_from_sqlite():
   dout = []
   for result in results:
     # tokenize etc
-    title = '<d><p><s>' + result[0].lower() + '</s></p></d>'
+    title = tokenize_body(result[0])
     body = tokenize_body(result[1])
     words = " ".join(result).lower().split()
     counter.update(words)
