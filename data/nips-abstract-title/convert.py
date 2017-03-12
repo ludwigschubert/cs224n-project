@@ -10,6 +10,11 @@ import random
 from nltk.tokenize import sent_tokenize
 random.seed(122956419)
 
+def tokenize_body(text):
+  document = text.replace('\n', ' ').replace('\t', ' ')
+  sentences = sent_tokenize(document)
+  return '<d><p>' + ' '.join(['<s>' + sentence.lower() + '</s>' for sentence in sentences]) + '</p></d>'
+
 def _extract_from_sqlite():
   conn = sqlite3.connect("../sources/nips-papers/database.sqlite")
   cursor = conn.cursor()
@@ -23,9 +28,7 @@ def _extract_from_sqlite():
     writer.write("  ") # indent
     # tokenize etc
     title = '<d><p><s>' + result[0].lower() + '</s></p></d>'
-    body = result[1].replace('\n', ' ').replace('\t', ' ')
-    sentences = sent_tokenize(body)
-    body = '<d><p>' + ' '.join(['<s>' + sentence.lower() + '</s>' for sentence in sentences]) + '</p></d>'
+    body = tokenize_body(result[1])
     words = " ".join(result).lower().split()
     counter.update(words)
     # create and serialize tf_example object
