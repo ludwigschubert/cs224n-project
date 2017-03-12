@@ -1,4 +1,10 @@
 import json
+from nltk.tokenize import sent_tokenize
+
+def tokenize_body(text):
+  document = text.replace('\n', ' ').replace('\t', ' ')
+  sentences = sent_tokenize(document)
+  return '<d><p>' + ' '.join(['<s>' + sentence.lower() + '</s>' for sentence in sentences]) + '</p></d>'
 
 files = ['train-v1.1.json','dev-v1.1.json']
 dataset = {}
@@ -21,14 +27,14 @@ for key in dataset:
 				sa = sorted([(len(a['text']),a['text'].lower()) for a in qas['answers']])[0][1]
 				if 'who' in q :
 					count_t +=1
-					labels.append(q.replace('who',sa))
+					labels.append(tokenize_body(q.replace('who',sa)))
 				#elif 'what was' in q:
 				#	print sa, '|', q.replace('what',sa)
 				#	count_t +=1
 				else:
 					count_f +=1
 			if len(labels) >0:
-				dout.append({'data':context.lower(),'label':labels,'set':key})
+				dout.append({'data':tokenize_body(context.lower()),'label':labels,'set':key})
 
 print count_t,count_f 
 with open('data.json','w') as fp:
