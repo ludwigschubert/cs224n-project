@@ -70,4 +70,7 @@ def glove2dict(src_filename):
     glv_dim = res['the'].shape[0]
     res['<UNK>'] = np.array([random.uniform(-0.5, 0.5) for i in range(glv_dim)])
     res['<PAD>'] = np.array([random.uniform(-0.5, 0.5) for i in range(glv_dim)])
+    res['<EOS>'] = np.array([random.uniform(-0.5, 0.5) for i in range(glv_dim)])
+    res['<SOS>'] = np.array([random.uniform(-0.5, 0.5) for i in range(glv_dim)])
+
     return res
