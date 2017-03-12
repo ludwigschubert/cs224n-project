@@ -14,8 +14,9 @@ random.seed(122956419)
 def tokenize_body(text):
   document = text.replace('-\n', '').replace('- \n', ' ').replace('\n', ' ').replace('\t', ' ')
   sentences = sent_tokenize(document)
-  result =  '<d><p>' + ' '.join(['<s>' + ' '.join(word_tokenize(sentence)).lower() + '</s>' for sentence in sentences]) + '</p></d>'
+  result =  '<d> <p> ' + ' '.join(['<s> ' + ' '.join(word_tokenize(sentence)).lower() + ' </s>' for sentence in sentences]) + ' </p> </d>'
   return result
+
 
 docs_folder = "../sources/duc2004/docs"
 labels_folder = "../sources/duc2004/eval/models/1/"

@@ -15,8 +15,9 @@ random.seed(401986418)
 def tokenize_body(text):
   document = text.replace('-\n', '').replace('- \n', ' ').replace('\n', ' ').replace('\t', ' ')
   sentences = sent_tokenize(document)
-  result =  '<d><p>' + ' '.join(['<s>' + ' '.join(word_tokenize(sentence)).lower() + '</s>' for sentence in sentences]) + '</p></d>'
+  result =  '<d> <p> ' + ' '.join(['<s> ' + ' '.join(word_tokenize(sentence)).lower() + ' </s>' for sentence in sentences]) + ' </p> </d>'
   return result
+
 
 def _extract_from_sqlite():
   conn = sqlite3.connect("../sources/nips-papers/database.sqlite")

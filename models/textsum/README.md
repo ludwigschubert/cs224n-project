@@ -112,7 +112,7 @@ bazel-bin/textsum/seq2seq_attention \
 # Run the eval. Try to avoid running on the same machine as training.
 bazel-bin/textsum/seq2seq_attention \
   --mode=eval \
-  --article_key=article \
+  --article_key=article \eval
   --abstract_key=abstract \
   --data_path=data/validation-* \
   --vocab_path=data/vocab \
