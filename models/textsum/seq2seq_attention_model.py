@@ -244,7 +244,7 @@ class Seq2SeqAttentionModel(object):
 
     self._lr_rate = tf.maximum(
         hps.min_lr,  # min_lr_rate.
-        tf.train.exponential_decay(hps.lr, self.global_step, 30000, 0.98))
+        tf.train.exponential_decay(hps.lr, self.global_step, 10000, 0.98))
 
     tvars = tf.trainable_variables()
     with tf.device(self._get_gpu(self._num_gpus-1)):

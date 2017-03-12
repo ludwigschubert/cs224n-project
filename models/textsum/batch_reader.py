@@ -66,7 +66,7 @@ class Batcher(object):
     self._input_queue = Queue.Queue(QUEUE_NUM_BATCH * self._hps.batch_size)
     self._bucket_input_queue = Queue.Queue(QUEUE_NUM_BATCH)
     self._input_threads = []
-    for _ in xrange(16):
+    for _ in xrange(4):
       self._input_threads.append(Thread(target=self._FillInputQueue))
       self._input_threads[-1].daemon = True
       self._input_threads[-1].start()
