@@ -1,10 +1,11 @@
 import json
-from nltk.tokenize import sent_tokenize
+from nltk.tokenize import sent_tokenize, word_tokenize
 
 def tokenize_body(text):
-  document = text.replace('\n', ' ').replace('\t', ' ')
+  document = text.replace('-\n', '').replace('- \n', ' ').replace('\n', ' ').replace('\t', ' ')
   sentences = sent_tokenize(document)
-  return '<d><p>' + ' '.join(['<s>' + sentence.lower() + '</s>' for sentence in sentences]) + '</p></d>'
+  result =  '<d><p>' + ' '.join(['<s>' + ' '.join(word_tokenize(sentence)).lower() + '</s>' for sentence in sentences]) + '</p></d>'
+  return result
 
 files = ['train-v1.1.json','dev-v1.1.json']
 dataset = {}
