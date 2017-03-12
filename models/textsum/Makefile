@@ -17,7 +17,7 @@ train: data/vocab data/train
 	  --mode=train \
 	  --article_key=article \
 	  --abstract_key=abstract \
-	  --data_path=data/titles_and_abstracts.pb2 \
+	  --data_path=data/train \
 	  --vocab_path=data/vocab \
 	  --log_root=log \
 	  --train_dir=log/train
