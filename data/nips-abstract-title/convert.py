@@ -22,10 +22,8 @@ def _extract_from_sqlite():
   select = "SELECT title, abstract FROM papers WHERE abstract != 'Abstract Missing';"
   cursor.execute(select)
   results = cursor.fetchall()
-  writer = open("data.json", 'w')
-  writer.write("[\n")
+  dout = []
   for result in results:
-    writer.write("  ") # indent
     # tokenize etc
     title = '<d><p><s>' + result[0].lower() + '</s></p></d>'
     body = tokenize_body(result[1])
@@ -36,11 +34,9 @@ def _extract_from_sqlite():
     example['data'] = str(body)
     example['label'] = [str(title)]
     example['set'] = random.choices(['train', 'dev', 'test'], weights=[80, 10, 10])[0]
-    writer.write(json.dumps(example))
-    writer.write(",\n")
-  writer.write("]")
-  writer.close()
-
+    dout.append(example)
+  with open('data.json','w') as fp:
+    json.dump(dout, fp, sort_keys=True, indent=4, separators=(',', ': '))
 
 def main(unused_argv):
   _extract_from_sqlite()

@@ -22,6 +22,7 @@ output_file = "data.json"
 writer = open(output_file, 'w')
 writer.write("[\n")
 
+dout = []
 for folder in glob(docs_folder + "/*/"):
   for document_path in glob(folder + "*"):
     _, document_name = os.path.split(document_path)
@@ -36,34 +37,9 @@ for folder in glob(docs_folder + "/*/"):
     assert 4 <= len(label_paths) <= 8, "Too many glob hits:  " + str(label_paths)
     for label_path in label_paths:
       with open(label_path, 'r') as label_file:
-        example['label'].append(label_file.read().strip())
+        label = tokenize_body(label_file.read().strip())
+        example['label'].append(label)
     example['set'] = random.choices(['train', 'dev', 'test'], weights=[80, 10, 10])[0]
-    writer.write(json.dumps(example))
-    writer.write(",\n")
-writer.write("]")
-writer.close()
-#
-# counter = collections.Counter()
-# select = "SELECT title, abstract FROM papers WHERE abstract != 'Abstract Missing';"
-# cursor.execute(select)
-# results = cursor.fetchall()
-# writer = open("data.json", 'w')
-# writer.write("[\n")
-# for result in results:
-#   writer.write("  ") # indent
-#   # tokenize etc
-#   title = '<d><p><s>' + result[0].lower() + '</s></p></d>'
-#   body = result[1].replace('\n', ' ').replace('\t', ' ')
-#   sentences = sent_tokenize(body)
-#   body = '<d><p>' + ' '.join(['<s>' + sentence.lower() + '</s>' for sentence in sentences]) + '</p></d>'
-#   words = " ".join(result).lower().split()
-#   counter.update(words)
-#   # create and serialize tf_example object
-#   example = {}
-#   example['data'] = str(body)
-#   example['label'] = [str(title)]
-#   example['set'] = random.choices(['train', 'dev', 'test'], weights=[80, 10, 10])[0]
-#   writer.write(json.dumps(example))
-#   writer.write(",\n")
-# writer.write("]")
-# writer.close()
+    dout.append(example)
+with open('data.json','w') as fp:
+  json.dump(dout, fp, sort_keys=True, indent=4, separators=(',', ': '))
