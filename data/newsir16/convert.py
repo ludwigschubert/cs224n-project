@@ -25,6 +25,8 @@ with gzip.open('signalmedia-1m.jsonl.gz') as fp:
 	    else:
 		label = 'test'
                 print '\r',len(dout),
+                if len(dout) > 10000:
+                    break
 	dout.append({'data':tokenize_body(news_article['content'].lower()),'label':[tokenize_body(news_article['title'])],'set':label})
 
 with open('data.json','w') as fp:
