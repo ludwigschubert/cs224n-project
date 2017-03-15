@@ -1,0 +1,1 @@
+{"ROUGE-L-F": 0.04018, "ROUGE-2-F": 0.00237, "ROUGE-1-F": 0.04018, "dataset_tested": "squad", "ROUGE-L-P": 0.06244, "ROUGE-2-P": 0.00353, "ROUGE-2-R": 0.00183, "model": "textsum", "dataset_trained": "nips-abstract-title", "ROUGE-1-R": 0.03063, "ROUGE-1-P": 0.06244, "ROUGE-L-R": 0.03063}

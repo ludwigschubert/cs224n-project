@@ -13,35 +13,8 @@ ROUGE_DATA = join(ROUGE, "data")
 Computes ROUGE scores for models and datasets that have outputs available
 """
 
-evaluation_filename = "prediction.json.gz"
-model_data_subfolder = "data"
-model_training_subfolder = "train"
-
-model_paths = glob("../models/*/")
-model_names = [ basename(normpath((path))) for path in model_paths ]
-
-glove_path = set(['../data/glove/']) # ignore glove "dataset"
-dataset_paths = list( set(glob("../data/*/")) - glove_path )
-dataset_names = [ basename(normpath((path))) for path in dataset_paths ]
-
-def iterate_all_model_dataset_combos():
-  evaluations = []
-  for model_name, model_path in zip(model_names, model_paths):
-    cprint("\nModel " + model_name, 'green', attrs=['bold'])
-    cprint(40 * "-", 'green')
-    for train_dataset_name in dataset_names:
-      for test_dataset_name in dataset_names:
-        evaluation_folder_name = "_".join([model_name, train_dataset_name, test_dataset_name])
-        evaluation_file_name = join(evaluation_folder_name, evaluation_filename)
-        if exists(evaluation_folder_name) and exists(evaluation_file_name):
-          cprint("Evaluating trained on " + train_dataset_name + " tested on " + test_dataset_name, 'green')
-          results = evaluate_rouge_scores(evaluation_file_name)
-          results.update(model=model_name, dataset_trained=train_dataset_name, dataset_tested=test_dataset_name)
-          evaluations.append(results)
-        else:
-          cprint("missing " + model_name + " trained on " + train_dataset_name + " tested on " + test_dataset_name, 'yellow')
-  with open("evaluations.json", 'w') as evaluations_file:
-    evaluations_file.write(json.dumps(evaluations))
+prediction_filename = "prediction.json.gz"
+evaluation_filename = "evaluation.json"
 
 def evaluate_rouge_scores(evaluation_file_name):
   summaries = [] # model-generated
@@ -69,4 +42,22 @@ def evaluate_rouge_scores(evaluation_file_name):
   return result
 
 
-iterate_all_model_dataset_combos()
+evaluation_paths = glob("*/")
+for evaluation_path in evaluation_paths:
+  names = basename(normpath(evaluation_path)).split("_")
+  model_name, train_dataset_name = names[0], names[1]
+  if len(names) > 2:
+    test_dataset_name = names[2]
+  else:
+    test_dataset_name = train_dataset_name
+  cprint("\nModel " + model_name, 'green', attrs=['bold'])
+  cprint(40 * "-", 'green')
+  prediction_file_path = join(evaluation_path, prediction_filename)
+  evaluation_file_path = join(evaluation_path, evaluation_filename)
+  if exists(prediction_file_path) and not exists(evaluation_file_path):
+    cprint("Evaluating trained on " + train_dataset_name + " tested on " + test_dataset_name, 'green')
+    results = evaluate_rouge_scores(prediction_file_path)
+    print(results)
+    results.update(model=model_name, dataset_trained=train_dataset_name, dataset_tested=test_dataset_name)
+    with open(evaluation_file_path, 'w') as evaluations_file:
+      evaluations_file.write(json.dumps(results))

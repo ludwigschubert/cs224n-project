@@ -19,6 +19,8 @@ model-checkpoint*
 events.out*
 model.ckpt-*
 
+evaluation/*/prediction.json.gz
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
