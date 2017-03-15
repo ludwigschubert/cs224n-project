@@ -47,18 +47,18 @@ class DecodeIO(object):
     self._ref_file = None
     self._decode_file = None
 
-  def Write(self, reference, decode):
+  def Write(self, article, reference, decode):
     """Writes the reference and decoded outputs to RKV files.
 
     Args:
       reference: The human (correct) result.
       decode: The machine-generated result
     """
-    self._ref_file.write('output=%s\n' % reference)
-    self._decode_file.write('output=%s\n' % decode)
+    # self._ref_file.write('output=%s\n' % reference)
+    self._decode_file.write('{\n  "data":"%s",\n  "labels":["%s"],\n  "prediction":"%s"\n},\n' % (article, reference, decode))
     self._cnt += 1
     if self._cnt % DECODE_IO_FLUSH_INTERVAL == 0:
-      self._ref_file.flush()
+      # self._ref_file.flush()
       self._decode_file.flush()
 
   def ResetFiles(self):
@@ -70,6 +70,7 @@ class DecodeIO(object):
         os.path.join(self._outdir, 'ref%d'%timestamp), 'w')
     self._decode_file = open(
         os.path.join(self._outdir, 'decode%d'%timestamp), 'w')
+    self._decode_file.write('[\n')
 
 
 class BSDecoder(object):
@@ -111,6 +112,7 @@ class BSDecoder(object):
     Returns:
       If success, returns true, otherwise, false.
     """
+    tf.logging.set_verbosity(tf.logging.INFO)
     ckpt_state = tf.train.get_checkpoint_state(FLAGS.log_root)
     if not (ckpt_state and ckpt_state.model_checkpoint_path):
       tf.logging.info('No model to decode yet at %s', FLAGS.log_root)
@@ -158,4 +160,4 @@ class BSDecoder(object):
     tf.logging.info('article:  %s', article)
     tf.logging.info('abstract: %s', abstract)
     tf.logging.info('decoded:  %s', decoded_output)
-    self._decode_io.Write(abstract, decoded_output.strip())
+    self._decode_io.Write(article, abstract, decoded_output.strip())

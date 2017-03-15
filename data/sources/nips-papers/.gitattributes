@@ -1,2 +1,0 @@
-vocab filter=lfs diff=lfs merge=lfs -text
-titles_and_abstracts.pb2 filter=lfs diff=lfs merge=lfs -text

@@ -6,11 +6,18 @@ data/nips-papers/paper_authors.csv
 data/nips-papers/paper_titles_and_abstracts.csv
 data/nips-papers/papers.csv
 data/nips-papers/select_titles_and_abstracts.sh
+data/glove
 
 # Models
 
 models/textsum/data
 models/textsum/log
+models/textsum/textsum
+models/textsum/train-nips-abstract-title
+
+model-checkpoint*
+events.out*
+model.ckpt-*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
