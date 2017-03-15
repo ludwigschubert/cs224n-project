@@ -106,6 +106,7 @@ with open(dataset_file) as fp:
 
 
 def try_restoring_checkpoint(session, saver):
+    print('trying to restore checkpoints...')
     try:
       ckpt_state = tf.train.get_checkpoint_state(LOGDIR)
     except tf.errors.OutOfRangeError as e:
@@ -226,5 +227,6 @@ with tf.Session() as sess:
             print('\n')
         if i % CHECKPOINT_EVERY == 0:
             if runmode == "train":
+                print("Saving checkpoint...")
                 saver.save(sess, os.path.join(LOGDIR, 'model-checkpoint-'), global_step=i)
                 summary_writer.flush()
