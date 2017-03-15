@@ -27,7 +27,7 @@ for key in dataset:
 			for qas in para['qas']:
 				q = qas['question'].lower().replace('?','.')
 				sa = sorted([(len(a['text']),a['text'].lower()) for a in qas['answers']])[0][1]
-				if 'who' in q  and 'what' not in q and 'where' not in q and 'when' not in q:
+				if 'who' in q  and 'what' not in q and 'where' not in q and 'when' not in q and 'how' not in q:
 					count_t +=1
 					labels.append(tokenize_body(q.replace('who',sa)))
 				#elif 'what was' in q:
