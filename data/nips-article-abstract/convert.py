@@ -20,7 +20,7 @@ def tokenize_body(text):
 
 
 def _extract_from_sqlite():
-  conn = sqlite3.connect("../sources/nips-papers/database.sqlite")
+  conn = sqlite3.connect("database.sqlite")
   cursor = conn.cursor()
   counter = collections.Counter()
   select = "SELECT abstract, paper_text FROM papers WHERE abstract != 'Abstract Missing';"

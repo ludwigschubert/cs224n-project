@@ -1,8 +1,8 @@
-../../data/nips-abstract-title/data.json: ../../data/nips-abstract-title/convert.py
-	python3 ../../data/nips-abstract-title/convert.py
+# ../../data/nips-abstract-title/data.json: ../../data/nips-abstract-title/convert.py
+#     python3 ../../data/nips-abstract-title/convert.py
 
-data/vocab data/train data/dev data/test: prepare_data.py ../../data/nips-abstract-title/data.json # also generates other required data files
-	python prepare_data.py --dataset=../../data/nips-abstract-title
+data/vocab data/train data/dev data/test: prepare_data.py ../../data/duc2004/data.json # also generates other required data files
+	python prepare_data.py --dataset=../../data/duc2004
 
 .PHONY: olddata
 olddata:
@@ -34,16 +34,16 @@ eval: data/vocab data/dev
 	  --train_dir=log-nips-abstract-title
 
  .PHONY: test
- test: data/vocab data/test
+ test:
 	python seq2seq_attention.py \
 	  --mode=decode \
 	  --article_key=article \
 	  --abstract_key=abstract \
-	  --data_path=data/train \
-	  --vocab_path=data/vocab \
-	  --log_root=log-nips-abstract-title \
-	  --train_dir=log-nips-abstract-title \
-	  --decode_dir=log-nips-abstract-title-decode \
+	  --data_path=data-squad/train \
+	  --vocab_path=data-nips/vocab \
+	  --log_root=train-nips-abstract-title \
+	  --train_dir=train-nips-abstract-title \
+	  --decode_dir=../../evaluation/textsum_nips-abstract-title_squad \
 	  --beam_size=8
 
 .PHONY: clean
