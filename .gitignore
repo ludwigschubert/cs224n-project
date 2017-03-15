@@ -13,6 +13,7 @@ data/glove
 models/textsum/data
 models/textsum/log
 models/textsum/textsum
+models/textsum/train-nips-abstract-title
 
 model-checkpoint*
 events.out*
