@@ -28,10 +28,10 @@ eval: data/vocab data/dev
 	  --mode=eval \
 	  --article_key=article \
 	  --abstract_key=abstract \
-	  --data_path=data/dev \
+	  --data_path=data/train \
 	  --vocab_path=data/vocab \
-	  --log_root=log \
-	  --train_dir=log/eval
+	  --log_root=log-nips-abstract-title \
+	  --train_dir=log-nips-abstract-title
 
  .PHONY: test
  test: data/vocab data/test
@@ -39,10 +39,12 @@ eval: data/vocab data/dev
 	  --mode=decode \
 	  --article_key=article \
 	  --abstract_key=abstract \
-	  --data_path=data/test \
+	  --data_path=data/train \
 	  --vocab_path=data/vocab \
-	  --log_root=log \
-	  --train_dir=log/test
+	  --log_root=log-nips-abstract-title \
+	  --train_dir=log-nips-abstract-title \
+	  --decode_dir=log-nips-abstract-title-decode \
+	  --beam_size=8
 
 .PHONY: clean
 clean:
