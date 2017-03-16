@@ -9,18 +9,26 @@ import numpy as np
 import tensorflow as tf
 from sys import argv
 import os
+import argparse
 
-# Usage: decoderTT.py train_or_test datasetname/file.json
-# Example: decoderTT.py train duc2004/data.json
+parser = argparse.ArgumentParser()
+parser.add_argument('--runmode', dest='runmode', choices=["train", "test"], default="train")
+parser.add_argument('--dataset_name', dest='dataset_name', type=str, default="duc2004")
+parser.add_argument('--cnn', dest='cnn', type=int, default=0)
+parser.add_argument('--train_embedding', dest='train_embedding', type=int, default=0)
+parser.add_argument('--output_root', dest='output_root', type=str, default="")
+args = parser.parse_args()
 
-if len(argv) == 4:
-    runmode, dataset, output_root = argv[1:4]
-else:
-    runmode, dataset, output_root = "train", "duc2004/data.json", ""
-dataset_name = dataset.split("/")[0]
-LOGDIR = "-".join([output_root, dataset_name, runmode])
-dataset_file = os.path.join("../../data", dataset)
-print("Runmode %s on dataset %s" % (runmode, dataset_name))
+log_components = [args.runmode, args.dataset_name]
+if args.cnn:
+    log_components += ["cnn"]
+if args.train_embedding:
+    log_components += ["train_embedding"]
+LOGDIR = "-".join(log_components)
+if args.output_root != "":
+    LOGDIR = os.path.join(args.output_root, LOGDIR)
+dataset_file = os.path.join("../../data", args.dataset_name, "data.json")
+print("Runmode %s on dataset %s" % (args.runmode, args.dataset_name))
 
 GLOVE_LOC = '../../data/glove/glove.6B.50d.txt'
 
@@ -29,20 +37,19 @@ OUTPUT_MAX = 15
 VOCAB_MAX = 30000
 
 GLV_RANGE = 0.5
-LR_DECAY = 1600/32
 LR_DECAY_AMOUNT = 0.9
 starter_learning_rate = 1e-2
-hs = 64
+hs = 128
 
 batch_size = 32
 PRINT_EVERY = 25
-CHECKPOINT_EVERY = 500
+CHECKPOINT_EVERY = 50
 TRAIN_KEEP_PROB = 0.5
-TRAIN_EMBEDDING = False
-USE_CNN = False
+TRAIN_EMBEDDING = args.train_embedding
+USE_CNN = args.cnn
 KERNEL_SIZE = 7
 
-if runmode == "train":
+if args.runmode == "train":
     if not os.path.exists(LOGDIR):
         os.makedirs(LOGDIR)
 
@@ -124,7 +131,7 @@ def try_restoring_checkpoint(session, saver):
 tf.reset_default_graph()
 global_step = tf.Variable(0, trainable=False)
 VOCAB_SIZE = len(valid_words)
-learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step,LR_DECAY, LR_DECAY_AMOUNT, staircase=True)
+learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step, len(train_x)/batch_size, LR_DECAY_AMOUNT, staircase=True)
 
 input_placeholder = tf.placeholder(tf.int32)
 mask_placeholder = tf.placeholder(tf.float32,(None,OUTPUT_MAX))
@@ -194,7 +201,7 @@ def sample(context_vector):
     return ' '.join(sentence)
 with tf.Session() as sess:
     merged = tf.summary.merge_all()
-    if runmode == "train":
+    if args.runmode == "train":
         summary_writer = tf.summary.FileWriter(LOGDIR, sess.graph)
         saver =  tf.train.Saver()
         try_restoring_checkpoint(sess, saver)
@@ -215,19 +222,16 @@ with tf.Session() as sess:
             dropout_rate: TRAIN_KEEP_PROB
         }
         _, bl, summary = sess.run([train_step, loss, merged], feed_dict=feed_dict)
-        if runmode == "train":
+        if args.runmode == "train":
             summary_writer.add_summary(summary, i)
         if i % PRINT_EVERY == 0:
             print(i,bl)
             print('TRAIN_SAMPLE: ',sample(train_x[start_idx]))
             print('TRAIN_LABEL: ',' '.join([x for x in [valid_words[x] for x in train_y[start_idx]] if x not in ['<EOS>','<SOS>']]))
-            print()
             index = int(random.random()*10)
-            #print('DEV_SAMPLE: ',sample(dev_x[index]))
-            #print('DEV_LABEL: ',' '.join([x for x in [valid_words[x] for x in dev_y[index]] if x not in ['<EOS>','<SOS>']]))
             print('\n')
-        if i != 0 and i % (data_size/batch_size) == 0:
-            if runmode == "train":
+        if i != 0 and i % CHECKPOINT_EVERY == 0:
+            if args.runmode == "train":
                 print("Saving checkpoint...")
                 saver.save(sess, os.path.join(LOGDIR, 'model-checkpoint-'), global_step=i)
                 summary_writer.flush()
