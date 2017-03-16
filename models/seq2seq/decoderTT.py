@@ -69,9 +69,13 @@ with open(dataset_file) as fp:
     dev = [x for x in data if x['set'] == 'dev']
     test = [x for x in data if x['set'] == 'test']
 
-    train = [(clean(x['data'],INPUT_MAX),clean(x['label'][0],OUTPUT_MAX)) for x in train]
-    dev = [(clean(x['data'],INPUT_MAX),clean(x['label'][0],OUTPUT_MAX)) for x in dev]
-    test = [(clean(x['data'],INPUT_MAX),clean(x['label'][0],OUTPUT_MAX)) for x in test]
+    #train = [(clean(x['data'],INPUT_MAX),clean(x['label'][0],OUTPUT_MAX)) for x in train]
+    train = sum([[(clean(x['data'],INPUT_MAX),clean(x['label'][i],OUTPUT_MAX)) for i in xrange(len(x['label']))] for x in train],[])
+    dev   = sum([[(clean(x['data'],INPUT_MAX),clean(x['label'][i],OUTPUT_MAX)) for i in xrange(len(x['label']))] for x in dev  ],[])
+    test  = sum([[(clean(x['data'],INPUT_MAX),clean(x['label'][i],OUTPUT_MAX)) for i in xrange(len(x['label']))] for x in test ],[])
+    #test  = [sum([(clean(x['data'],INPUT_MAX),clean(x['label'][i],OUTPUT_MAX)) for i in xrange(len(x['label']))],[]) for x in test]
+    #dev = [(clean(x['data'],INPUT_MAX),clean(x['label'][0],OUTPUT_MAX)) for x in dev]
+    #test = [(clean(x['data'],INPUT_MAX),clean(x['label'][0],OUTPUT_MAX)) for x in test]
 
     valid_words = (sorted([(v,k) for k,v in word_counter.items()])[::-1])
     print(len(valid_words))
@@ -142,8 +146,8 @@ if USE_CNN:
     state = tf.reduce_max(h_state,1)
 else:
     input_summed= tf.reduce_mean(input_embed,1)
-    
-    hh0 = tf.get_variable("hh0", shape=[GLV_DIM,hs], initializer=tf.contrib.layers.xavier_initializer(),dtype=tf.float32) 
+
+    hh0 = tf.get_variable("hh0", shape=[GLV_DIM,hs], initializer=tf.contrib.layers.xavier_initializer(),dtype=tf.float32)
     hb0 = tf.Variable(tf.constant(0.0, shape=[hs],dtype=tf.float32))
 
 cell = tf.contrib.rnn.GRUCell(hs)
@@ -225,7 +229,7 @@ with tf.Session() as sess:
             #print('DEV_SAMPLE: ',sample(dev_x[index]))
             #print('DEV_LABEL: ',' '.join([x for x in [valid_words[x] for x in dev_y[index]] if x not in ['<EOS>','<SOS>']]))
             print('\n')
-        if i % CHECKPOINT_EVERY == 0:
+        if i != 0 and i % (data_size/batch_size) == 0:
             if runmode == "train":
                 print("Saving checkpoint...")
                 saver.save(sess, os.path.join(LOGDIR, 'model-checkpoint-'), global_step=i)
