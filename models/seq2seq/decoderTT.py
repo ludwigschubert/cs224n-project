@@ -29,17 +29,17 @@ OUTPUT_MAX = 15
 VOCAB_MAX = 30000
 
 GLV_RANGE = 0.5
-LR_DECAY = 1000
+LR_DECAY = 1600/32
 LR_DECAY_AMOUNT = 0.9
 starter_learning_rate = 1e-2
-hs = 128
+hs = 64
 
 batch_size = 32
 PRINT_EVERY = 25
 CHECKPOINT_EVERY = 500
 TRAIN_KEEP_PROB = 0.5
 TRAIN_EMBEDDING = False
-USE_CNN = True
+USE_CNN = False
 KERNEL_SIZE = 7
 
 if runmode == "train":
