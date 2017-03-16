@@ -59,9 +59,9 @@ with open(DATASET) as fp:
     dev = [x for x in data if x['set'] == 'dev']
     test = [x for x in data if x['set'] == 'test']
 
-    train = [(clean(x['data'],INPUT_MAX),clean(x['label'][0],OUTPUT_MAX)) for x in train]
-    dev = [(clean(x['data'],INPUT_MAX),clean(x['label'][0],OUTPUT_MAX)) for x in dev]
-    test = [(clean(x['data'],INPUT_MAX),clean(x['label'][0],OUTPUT_MAX)) for x in test]
+    train = sum([[(clean(x['data'],INPUT_MAX),clean(x['label'][i],OUTPUT_MAX)) for i in xrange(len(x['label']))] for x in train],[])
+    dev   = sum([[(clean(x['data'],INPUT_MAX),clean(x['label'][i],OUTPUT_MAX)) for i in xrange(len(x['label']))] for x in dev  ],[])
+    test  = sum([[(clean(x['data'],INPUT_MAX),clean(x['label'][i],OUTPUT_MAX)) for i in xrange(len(x['label']))] for x in test ],[])
 
     valid_words = (sorted([(v,k) for k,v in word_counter.items()])[::-1])
     print(len(valid_words))
