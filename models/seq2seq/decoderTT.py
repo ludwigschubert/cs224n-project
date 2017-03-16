@@ -131,7 +131,7 @@ def try_restoring_checkpoint(session, saver):
 tf.reset_default_graph()
 global_step = tf.Variable(0, trainable=False)
 VOCAB_SIZE = len(valid_words)
-learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step, len(train_x/batch_size), LR_DECAY_AMOUNT, staircase=True)
+learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step, len(train_x)/batch_size, LR_DECAY_AMOUNT, staircase=True)
 
 input_placeholder = tf.placeholder(tf.int32)
 mask_placeholder = tf.placeholder(tf.float32,(None,OUTPUT_MAX))
