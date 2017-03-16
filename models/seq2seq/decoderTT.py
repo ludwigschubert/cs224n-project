@@ -30,20 +30,19 @@ if args.output_root != "":
 dataset_file = os.path.join("../../data", args.dataset_name, "data.json")
 print("Runmode %s on dataset %s" % (args.runmode, args.dataset_name))
 
-GLOVE_LOC = '../../data/glove/glove.6B.50d.txt'
+GLOVE_LOC = '../../data/glove/glove.6B.100d.txt'
 
 INPUT_MAX = 150
-OUTPUT_MAX = 15
+OUTPUT_MAX = 20
 VOCAB_MAX = 30000
 
 GLV_RANGE = 0.5
 LR_DECAY_AMOUNT = 0.9
 starter_learning_rate = 1e-2
-hs = 128
+hs = 256
 
 batch_size = 32
-PRINT_EVERY = 25
-CHECKPOINT_EVERY = 50
+PRINT_EVERY = 250
 TRAIN_KEEP_PROB = 0.5
 TRAIN_EMBEDDING = args.train_embedding
 USE_CNN = args.cnn
@@ -131,7 +130,7 @@ def try_restoring_checkpoint(session, saver):
 tf.reset_default_graph()
 global_step = tf.Variable(0, trainable=False)
 VOCAB_SIZE = len(valid_words)
-learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step, len(train_x/batch_size), LR_DECAY_AMOUNT, staircase=True)
+learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step, len(train_x)/batch_size, LR_DECAY_AMOUNT, staircase=True)
 
 input_placeholder = tf.placeholder(tf.int32)
 mask_placeholder = tf.placeholder(tf.float32,(None,OUTPUT_MAX))
@@ -230,7 +229,7 @@ with tf.Session() as sess:
             print('TRAIN_LABEL: ',' '.join([x for x in [valid_words[x] for x in train_y[start_idx]] if x not in ['<EOS>','<SOS>']]))
             index = int(random.random()*10)
             print('\n')
-        if i != 0 and i % CHECKPOINT_EVERY == 0:
+        if i != 0 and i %2000*len(train_x)/batch_size == 0:
             if args.runmode == "train":
                 print("Saving checkpoint...")
                 saver.save(sess, os.path.join(LOGDIR, 'model-checkpoint-'), global_step=i)
