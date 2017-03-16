@@ -30,20 +30,20 @@ if args.output_root != "":
 dataset_file = os.path.join("../../data", args.dataset_name, "data.json")
 print("Runmode %s on dataset %s" % (args.runmode, args.dataset_name))
 
-GLOVE_LOC = '../../data/glove/glove.6B.50d.txt'
+GLOVE_LOC = '../../data/glove/glove.6B.100d.txt'
 
 INPUT_MAX = 150
-OUTPUT_MAX = 15
+OUTPUT_MAX = 20
 VOCAB_MAX = 30000
 
 GLV_RANGE = 0.5
 LR_DECAY_AMOUNT = 0.9
 starter_learning_rate = 1e-2
-hs = 128
+hs = 256
 
-batch_size = 32
-PRINT_EVERY = 25
-CHECKPOINT_EVERY = 50
+batch_size = 32 
+PRINT_EVERY = 100
+CHECKPOINT_EVERY = 5000
 TRAIN_KEEP_PROB = 0.5
 TRAIN_EMBEDDING = args.train_embedding
 USE_CNN = args.cnn
@@ -118,11 +118,11 @@ def try_restoring_checkpoint(session, saver):
     try:
       ckpt_state = tf.train.get_checkpoint_state(LOGDIR)
     except tf.errors.OutOfRangeError as e:
-      tf.logging.error('Cannot restore checkpoint: %s', e)
+      print('Cannot restore checkpoint: %s', e)
       exit(1)
 
     if not (ckpt_state and ckpt_state.model_checkpoint_path):
-      tf.logging.info('No model to eval yet at %s', LOGDIR)
+      print('No model to eval yet at %s', LOGDIR)
       return
 
     print('Loading checkpoint %s', ckpt_state.model_checkpoint_path)
@@ -201,11 +201,11 @@ def sample(context_vector):
     return ' '.join(sentence)
 with tf.Session() as sess:
     merged = tf.summary.merge_all()
+    sess.run(tf.global_variables_initializer())
     if args.runmode == "train":
         summary_writer = tf.summary.FileWriter(LOGDIR, sess.graph)
         saver =  tf.train.Saver()
         try_restoring_checkpoint(sess, saver)
-    sess.run(tf.global_variables_initializer())
     data_size = len(train_x)
     for i in range(data_size*10):
         start_idx = (i*batch_size)%data_size
