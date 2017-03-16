@@ -230,7 +230,7 @@ with tf.Session() as sess:
             print('TRAIN_LABEL: ',' '.join([x for x in [valid_words[x] for x in train_y[start_idx]] if x not in ['<EOS>','<SOS>']]))
             index = int(random.random()*10)
             print('\n')
-        if i != 0 and i % CHECKPOINT_EVERY == 0:
+        if i != 0 and i %2000*len(train_x)/batch_size == 0:
             if args.runmode == "train":
                 print("Saving checkpoint...")
                 saver.save(sess, os.path.join(LOGDIR, 'model-checkpoint-'), global_step=i)
