@@ -285,7 +285,7 @@ with tf.Session() as sess:
                 input_placeholder: train_mat,
                 labels_placeholder: train_y[start_idx:end_idx],
                 input_size_placeholder: train_sizes,
-                pad_idx_placeholder: [0 for _ in xrange(batch_size)],
+                pad_idx_placeholder: [0 for _ in xrange(train_mat.shape[0])],
                 mask_placeholder: mask,
                 dropout_rate: TRAIN_KEEP_PROB
             }
