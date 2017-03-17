@@ -37,7 +37,7 @@ OUTPUT_MAX = 20
 VOCAB_MAX = 10000
 
 GLV_RANGE = 0.5
-LR_DECAY_AMOUNT = 0.9
+LR_DECAY_AMOUNT = 0.8
 starter_learning_rate = 1e-2
 hs = 256
 
@@ -48,7 +48,7 @@ TRAIN_KEEP_PROB = 0.5
 TRAIN_EMBEDDING = args.train_embedding
 USE_CNN = args.cnn
 KERNEL_SIZE = 7
-
+concat_state = False
 if args.runmode == "train":
     if not os.path.exists(LOGDIR):
         os.makedirs(LOGDIR)
@@ -156,7 +156,9 @@ else:
     hh0 = tf.get_variable("hh0", shape=[GLV_DIM,hs], initializer=tf.contrib.layers.xavier_initializer(),dtype=tf.float32)
     hb0 = tf.Variable(tf.constant(0.0, shape=[hs],dtype=tf.float32))
 
-cell = tf.contrib.rnn.GRUCell(hs)
+num_layer = 1
+cell = tf.contrib.rnn.MultiRNNCell([tf.contrib.rnn.GRUCell(hs) for _ in xrange(num_layer)])
+#cell = tf.contrib.rnn.GRUCell(hs)
 
 looked_up = tf.nn.embedding_lookup(embedding,labels_placeholder)
 x = tf.reshape(looked_up,[-1,OUTPUT_MAX+1,GLV_DIM])
@@ -168,7 +170,13 @@ if USE_CNN:
 else:
     state = tf.matmul(input_summed,hh0) + hb0
 
-outputs, states = tf.nn.dynamic_rnn(cell, x, initial_state=state,dtype=tf.float32)
+duped_initial = tuple([state for _ in xrange(num_layer)]) 
+if concat_state:
+    dupe_state = tf.reshape(tf.tile(input_summed,[1,OUTPUT_MAX+1]),[-1,OUTPUT_MAX+1,GLV_DIM])
+    x = tf.concat([x,dupe_state],num_layer)
+
+#outputs, states = tf.nn.dynamic_rnn(cell, x, initial_state=state,dtype=tf.float32)
+outputs, states = tf.nn.dynamic_rnn(cell, x, initial_state=duped_initial,dtype=tf.float32)
 outputs_batchword = tf.reshape(outputs[:,:OUTPUT_MAX,:],[-1,hs])
 out_drop = tf.nn.dropout(outputs_batchword,dropout_rate)
 pred_batchword = tf.matmul(out_drop,U) + b2
