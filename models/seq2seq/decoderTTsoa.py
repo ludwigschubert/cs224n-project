@@ -99,7 +99,7 @@ with open(dataset_file) as fp:
 
     valid_words = (sorted([(v,k) for k,v in word_counter.items()])[::-1])
     print(len(valid_words))
-    valid_words = ['<EOS>'] + [x[1] for x in valid_words[:VOCAB_MAX]] + ['<PAD>','<UNK>','<SOS>']
+    valid_words = ['<PAD>'] + [x[1] for x in valid_words[:VOCAB_MAX]] + ['<EOS>','<UNK>','<SOS>']
     unk_idx = valid_words.index('<UNK>')
     vwd = defaultdict(lambda : unk_idx)
     for idx,word in enumerate(valid_words):
