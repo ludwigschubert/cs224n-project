@@ -237,8 +237,6 @@ def sample_batch(context_vectors):
         feed_dict = {
             input_placeholder: mat.reshape([num_sent,-1]),
             labels_placeholder: np.array(x).reshape([num_sent,-1]),
-            input_size_placeholder: sizes,
-            pad_idx_placeholder: [0 for _ in xrange(num_sent)],
             dropout_rate: 1.0
         }
         probs = preds.eval(feed_dict=feed_dict) # batch,word,vocab
@@ -303,4 +301,3 @@ with tf.Session() as sess:
         with gzip.open(predictions_file_path, 'w') as predictions_file:
             json.dump(predictions, predictions_file, sort_keys=True, indent=4, separators=(',', ': '))
         print("All done.")
-                summary_writer.flush()

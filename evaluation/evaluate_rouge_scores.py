@@ -5,7 +5,7 @@ from glob import glob
 from termcolor import colored, cprint
 from pythonrouge.pythonrouge import Pythonrouge
 
-ROUGE = expanduser("~/code/pythonrouge/pythonrouge/RELEASE-1.5.5/")
+ROUGE = expanduser("~/cs224n-project/evaluation/pythonrouge/pythonrouge/RELEASE-1.5.5/")
 ROUGE_PATH = join(ROUGE, "ROUGE-1.5.5.pl")
 ROUGE_DATA = join(ROUGE, "data")
 
@@ -45,6 +45,8 @@ def evaluate_rouge_scores(evaluation_file_name):
 evaluation_paths = glob("*/")
 for evaluation_path in evaluation_paths:
   names = basename(normpath(evaluation_path)).split("_")
+  if len(names) < 2:
+    continue
   model_name, train_dataset_name = names[0], names[1]
   if len(names) > 2:
     test_dataset_name = names[2]
