@@ -213,8 +213,8 @@ optimizer = tf.train.AdamOptimizer(learning_rate)
 #capped_gvs = [((tf.clip_by_value(grad, -1., 1.) if grad != None else None), var)  for grad, var in gvs]
 #train_step = optimizer.apply_gradients(capped_gvs,global_step=global_step)
 gvs = optimizer.compute_gradients(loss)
-grads = [g for g,v in grads_vars]
-tvars = [v for g,v in grads_vars]
+grads = [g for g,v in gvs]
+tvars = [v for g,v in gvs]
 grads, _= tf.clip_by_global_norm(grads,5)
 #self.grad_norm = tf.global_norm(grads)
 train_step = optimizer.apply_gradients(zip(grads,tvars))
