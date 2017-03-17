@@ -16,6 +16,16 @@ Computes ROUGE scores for models and datasets that have outputs available
 prediction_filename = "prediction.json.gz"
 evaluation_filename = "evaluation.json"
 
+def remove_prefix_and_suffix(text, prefix, suffix):
+  if text.startswith(prefix):
+      text = text[len(prefix):]
+  if text.endswith(suffix):
+      text = text[:-len(suffix)]
+  return text
+
+def remove_tags(sentence):
+  return remove_prefix_and_suffix(sentence, "<d> <p> <s>", "</s> </p> </d>").strip()
+
 def evaluate_rouge_scores(evaluation_file_name):
   summaries = [] # model-generated
   references = [] # human-generated
@@ -28,8 +38,8 @@ def evaluate_rouge_scores(evaluation_file_name):
       # datum = example['data']
       # if not datum in articles:
         # articles[datum] = True
-      summaries.append(example['prediction'].encode('utf-8').split())
-      references.append([example.encode('utf-8').split() for example in example['label']])
+      summaries.append( remove_tags(example['prediction']).encode('utf-8').split())
+      references.append([ remove_tags(example).encode('utf-8').split() for example in example['label']])
   print("%d entries are used for evaluation." % len(summaries))
   # DEBUG: print a couple examples and their respective ROUGE scores
   # print(zip(summaries[5:10], references[5:10]))
