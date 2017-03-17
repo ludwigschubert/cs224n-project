@@ -34,7 +34,7 @@ GLOVE_LOC = '../../data/glove/glove.6B.100d.txt'
 
 INPUT_MAX = 150
 OUTPUT_MAX = 20
-VOCAB_MAX = 30000
+VOCAB_MAX = 10000
 
 GLV_RANGE = 0.5
 LR_DECAY_AMOUNT = 0.9
@@ -56,9 +56,10 @@ if args.runmode == "train":
 words = glove2dict(GLOVE_LOC)
 word_counter = defaultdict(int)
 GLV_DIM = words['the'].shape[0]
-
+not_letters_or_digits = u'!"#%\'()*+,-./:;<=>?@[\]^_`{|}~'
+translate_table = dict((ord(char), None) for char in not_letters_or_digits)
 def clean(text,clip_n=0):
-    res = text.replace('<d>','').replace('<p>','').replace('<s>','').replace('</d>','').replace('</p>','').replace('</s>','')
+    res = text.replace('<d>','').replace('<p>','').replace('<s>','').replace('</d>','').replace('</p>','').replace('</s>','').translate(translate_table)
     r2 = []
     for word in res.split():
         if word not in words:
@@ -83,7 +84,7 @@ with open(dataset_file) as fp:
 
     valid_words = (sorted([(v,k) for k,v in word_counter.items()])[::-1])
     print(len(valid_words))
-    valid_words = [x[1] for x in valid_words[:VOCAB_MAX]] + ['<EOS>','<PAD>','<UNK>','<SOS>']
+    valid_words = ['<PAD>'] + [x[1] for x in valid_words[:VOCAB_MAX]] + ['<EOS>','<UNK>','<SOS>']
     unk_idx = valid_words.index('<UNK>')
     vwd = defaultdict(lambda : unk_idx)
     for idx,word in enumerate(valid_words):
@@ -100,6 +101,7 @@ with open(dataset_file) as fp:
     def sent_to_idxs_nopad(sentence):
         base =  [vwd[word] for word in sentence.split()]
         return base
+    random.shuffle(train)
     train_x = [sent_to_idxs_nopad(x[0]) for x in train]
     train_y = [sent_to_idxs(x[1])[0] for x in train]
     train_len = [sent_to_idxs(x[1])[1] for x in train]
@@ -228,7 +230,9 @@ with tf.Session() as sess:
             print(i,bl)
             print('TRAIN_SAMPLE: ',sample(train_x[start_idx]))
             print('TRAIN_LABEL: ',' '.join([x for x in [valid_words[x] for x in train_y[start_idx]] if x not in ['<EOS>','<SOS>']]))
-            index = int(random.random()*10)
+            index = int(random.random()*(len(dev_y)-1))
+            print('DEV_SAMPLE: ',sample(dev_x[index]))
+            print('DEV_LABEL: ',' '.join([x for x in [valid_words[x] for x in dev_y[index]] if x not in ['<EOS>','<SOS>']]))
             print('\n')
         if i != 0 and i %2000*len(train_x)/batch_size == 0:
             if args.runmode == "train":
