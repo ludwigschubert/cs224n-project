@@ -10,16 +10,23 @@ import tensorflow as tf
 from sys import argv
 import os
 import argparse
+import gzip
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--runmode', dest='runmode', choices=["train", "test"], default="train")
 parser.add_argument('--dataset_name', dest='dataset_name', type=str, default="duc2004")
+parser.add_argument('--trained_on', dest='trained_on', type=str, default="duc2004")
 parser.add_argument('--cnn', dest='cnn', type=int, default=0)
 parser.add_argument('--train_embedding', dest='train_embedding', type=int, default=0)
 parser.add_argument('--output_root', dest='output_root', type=str, default="")
+parser.add_argument('--evaluation_root', dest='evaluation_root', type=str, default="../../evaluation")
 args = parser.parse_args()
 
-log_components = [args.runmode, args.dataset_name]
+log_components = ["train"]
+if args.runmode == "train":
+    log_components += [args.dataset_name]
+elif args.runmode == "test":
+    log_components += [args.trained_on]
 if args.cnn:
     log_components += ["cnn"]
 if args.train_embedding:
@@ -29,6 +36,11 @@ if args.output_root != "":
     LOGDIR = os.path.join(args.output_root, LOGDIR)
 dataset_file = os.path.join("../../data", args.dataset_name, "data.json")
 print("Runmode %s on dataset %s" % (args.runmode, args.dataset_name))
+
+if args.runmode == "test":
+    predictions_dir_name = "_".join(["seq2seq", LOGDIR, args.trained_on, args.dataset_name])
+    predictions_dir_path = os.path.join(args.evaluation_root, predictions_dir_name)
+    predictions_file_path = os.path.join(predictions_dir_path, "prediction.json.gz")
 
 GLOVE_LOC = '../../data/glove/glove.6B.100d.txt'
 
@@ -52,6 +64,9 @@ concat_state = False
 if args.runmode == "train":
     if not os.path.exists(LOGDIR):
         os.makedirs(LOGDIR)
+if args.runmode == "test":
+    if not os.path.exists(predictions_dir_path):
+        os.makedirs(predictions_dir_path)
 
 words = glove2dict(GLOVE_LOC)
 word_counter = defaultdict(int)
@@ -74,13 +89,13 @@ def clean(text,clip_n=0):
 from collections import defaultdict
 with open(dataset_file) as fp:
     data = json.load(fp)
-    train = [x for x in data if x['set'] == 'train']
-    dev = [x for x in data if x['set'] == 'dev']
-    test = [x for x in data if x['set'] == 'test']
+    train_o = [x for x in data if x['set'] == 'train']
+    dev_o = [x for x in data if x['set'] == 'dev']
+    test_o = [x for x in data if x['set'] == 'test']
 
-    train = sum([[(clean(x['data'],INPUT_MAX),clean(x['label'][i],OUTPUT_MAX)) for i in xrange(len(x['label']))] for x in train],[])
-    dev   = sum([[(clean(x['data'],INPUT_MAX),clean(x['label'][i],OUTPUT_MAX)) for i in xrange(len(x['label']))] for x in dev  ],[])
-    test  = sum([[(clean(x['data'],INPUT_MAX),clean(x['label'][i],OUTPUT_MAX)) for i in xrange(len(x['label']))] for x in test ],[])
+    train = sum([[(clean(x['data'],INPUT_MAX), clean(x['label'][i],OUTPUT_MAX),idx) for i in xrange(len(x['label']))] for idx,x in enumerate(train_o)],[])
+    dev   = sum([[(clean(x['data'],INPUT_MAX), clean(x['label'][i],OUTPUT_MAX),idx) for i in xrange(len(x['label']))] for idx,x in enumerate(dev_o)  ],[])
+    test  = sum([[(clean(x['data'],INPUT_MAX), clean(x['label'][i],OUTPUT_MAX),idx) for i in xrange(len(x['label']))] for idx,x in enumerate(test_o) ],[])
 
     valid_words = (sorted([(v,k) for k,v in word_counter.items()])[::-1])
     print(len(valid_words))
@@ -120,15 +135,16 @@ def try_restoring_checkpoint(session, saver):
     try:
       ckpt_state = tf.train.get_checkpoint_state(LOGDIR)
     except tf.errors.OutOfRangeError as e:
-      print('Cannot restore checkpoint: %s', e)
+      print('Cannot restore checkpoint: ', e)
       exit(1)
 
     if not (ckpt_state and ckpt_state.model_checkpoint_path):
-      print('No model to eval yet at %s', LOGDIR)
+      print('No model to eval yet at ', LOGDIR)
       return
 
-    print('Loading checkpoint %s', ckpt_state.model_checkpoint_path)
+    print('Loading checkpoint ', ckpt_state.model_checkpoint_path)
     saver.restore(session, ckpt_state.model_checkpoint_path)
+    print('...loaded.')
 
 tf.reset_default_graph()
 global_step = tf.Variable(0, trainable=False)
@@ -200,7 +216,6 @@ def sample(context_vector):
             input_placeholder: np.array(context_vector).reshape([1,-1]),
             labels_placeholder: np.array(x).reshape([1,-1]),
             dropout_rate: 1.0
-            #mask_placeholder: None
         }
         probs = np.squeeze(preds.eval(feed_dict=feed_dict))
         new_word = valid_words[np.argmax(probs[i,:])]
@@ -209,41 +224,83 @@ def sample(context_vector):
         else:
             break
     return ' '.join(sentence)
+def sample_batch(context_vectors):
+    sizes = [len(x) for x in context_vectors]
+    mat = np.zeros(shape=(len(context_vectors),INPUT_MAX))
+    for idx,row in enumerate(context_vectors):
+        mat[idx,:sizes[idx]] = np.array(row)
+    num_sent = np.array(context_vectors).shape[0]
+    sentences = [[] for _ in xrange(num_sent)]
+
+    for i in xrange(OUTPUT_MAX):
+        x = [sent_to_idxs(' '.join(s))[0] for s in sentences]
+        feed_dict = {
+            input_placeholder: mat.reshape([num_sent,-1]),
+            labels_placeholder: np.array(x).reshape([num_sent,-1]),
+            input_size_placeholder: sizes,
+            pad_idx_placeholder: [0 for _ in xrange(num_sent)],
+            dropout_rate: 1.0
+        }
+        probs = preds.eval(feed_dict=feed_dict) # batch,word,vocab
+        for batch_i,batch_prob in enumerate(probs):
+            new_word = valid_words[np.argmax(batch_prob[i,:])]
+            sentences[batch_i].append(new_word)
+    stops = [sentence.index('<EOS>') if '<EOS>' in sentence else OUTPUT_MAX for sentence in sentences]
+    return [' '.join(sentence[:maxe]) for maxe,sentence in zip(stops,sentences)]
+
 with tf.Session() as sess:
     merged = tf.summary.merge_all()
     sess.run(tf.global_variables_initializer())
-    if args.runmode == "train":
-        summary_writer = tf.summary.FileWriter(LOGDIR, sess.graph)
-        saver =  tf.train.Saver()
-        try_restoring_checkpoint(sess, saver)
+    summary_writer = tf.summary.FileWriter(LOGDIR, sess.graph)
+    saver =  tf.train.Saver()
+    try_restoring_checkpoint(sess, saver)
     data_size = len(train_x)
-    for i in range(data_size*10):
-        start_idx = (i*batch_size)%data_size
-        end_idx = start_idx+batch_size
-        mask = np.array([np.array([1.0]*x[0] + [0.0]*x[1]) for x in train_len[start_idx:end_idx]])
-        train_sizes = [len(x) for x in train_x[start_idx:end_idx]]
-        train_mat = np.zeros(shape=(len(train_sizes),max(train_sizes)))
-        for idx,row in enumerate(train_x[start_idx:end_idx]):
-            train_mat[idx,:train_sizes[idx]] = np.array(row)
-        feed_dict = {
-            input_placeholder: train_mat,
-            labels_placeholder: train_y[start_idx:end_idx],
-            mask_placeholder: mask,
-            dropout_rate: TRAIN_KEEP_PROB
-        }
-        _, bl, summary = sess.run([train_step, loss, merged], feed_dict=feed_dict)
-        if args.runmode == "train":
-            summary_writer.add_summary(summary, i)
-        if i % PRINT_EVERY == 0:
-            print(i,bl)
-            print('TRAIN_SAMPLE: ',sample(train_x[start_idx]))
-            print('TRAIN_LABEL: ',' '.join([x for x in [valid_words[x] for x in train_y[start_idx]] if x not in ['<EOS>','<SOS>']]))
-            index = int(random.random()*(len(dev_y)-1))
-            print('DEV_SAMPLE: ',sample(dev_x[index]))
-            print('DEV_LABEL: ',' '.join([x for x in [valid_words[x] for x in dev_y[index]] if x not in ['<EOS>','<SOS>']]))
-            print('\n')
-        if i != 0 and i %2000*len(train_x)/batch_size == 0:
+    if args.runmode == "train":
+
+        for i in range(data_size*10):
+            start_idx = (i*batch_size)%data_size
+            end_idx = start_idx+batch_size
+            mask = np.array([np.array([1.0]*x[0] + [0.0]*x[1]) for x in train_len[start_idx:end_idx]])
+            train_sizes = [len(x) for x in train_x[start_idx:end_idx]]
+            train_mat = np.zeros(shape=(len(train_sizes),max(train_sizes)))
+            for idx,row in enumerate(train_x[start_idx:end_idx]):
+                train_mat[idx,:train_sizes[idx]] = np.array(row)
+            feed_dict = {
+                input_placeholder: train_mat,
+                labels_placeholder: train_y[start_idx:end_idx],
+                mask_placeholder: mask,
+                dropout_rate: TRAIN_KEEP_PROB
+            }
+            _, bl, summary = sess.run([train_step, loss, merged], feed_dict=feed_dict)
             if args.runmode == "train":
+                summary_writer.add_summary(summary, i)
+            if i % PRINT_EVERY == 0:
+                print(i,bl)
+                print('TRAIN_SAMPLE: ',sample(train_x[start_idx]))
+                print('TRAIN_LABEL: ',' '.join([x for x in [valid_words[x] for x in train_y[start_idx]] if x not in ['<EOS>','<SOS>']]))
+                index = int(random.random()*(len(dev_y)-1))
+                print('DEV_SAMPLE: ',sample(dev_x[index]))
+                print('DEV_LABEL: ',' '.join([x for x in [valid_words[x] for x in dev_y[index]] if x not in ['<EOS>','<SOS>']]))
+                print('\n')
+            if i != 0 and i %2000*len(train_x)/batch_size == 0:
                 print("Saving checkpoint...")
                 saver.save(sess, os.path.join(LOGDIR, 'model-checkpoint-'), global_step=i)
+    if args.runmode == "test":
+        batch_size = 2048
+        print("Running predictions for %d data points..." % len(train_x))
+        predictions = []
+        seen_data = {}
+        for batch_i in xrange(0,len(train_x),batch_size):
+            evaluation_data = train_x[batch_i:batch_i+batch_size]
+            prediction_results = sample_batch(evaluation_data)
+            for i, prediction in enumerate(prediction_results):
+                if train[i][2] not in seen_data:
+                    orig_data = train_o[train[i][2]]
+                    orig_data['prediction'] = "<d> <p> <s> " + prediction + " </s> </p> </d>"
+                    predictions.append(orig_data)
+                    seen_data[train[i][2]] = 1
+        print("Done, writing json.gz file...")
+        with gzip.open(predictions_file_path, 'w') as predictions_file:
+            json.dump(predictions, predictions_file, sort_keys=True, indent=4, separators=(',', ': '))
+        print("All done.")
                 summary_writer.flush()
