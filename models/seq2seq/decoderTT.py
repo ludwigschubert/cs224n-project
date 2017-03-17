@@ -74,8 +74,10 @@ word_counter = defaultdict(int)
 GLV_DIM = words['the'].shape[0]
 print("...loaded %d dimensional GLOVE vectors!" % GLV_DIM)
 
+not_letters_or_digits = u'!"#%\'()*+,-./:;<=>?@[\]^_`{|}~'
+translate_table = dict((ord(char), None) for char in not_letters_or_digits)
 def clean(text,clip_n=0):
-    res = text.replace('<d>','').replace('<p>','').replace('<s>','').replace('</d>','').replace('</p>','').replace('</s>','')
+    res = text.replace('<d>','').replace('<p>','').replace('<s>','').replace('</d>','').replace('</p>','').replace('</s>','').translate(translate_table)
     r2 = []
     for word in res.split():
         if word not in words:
