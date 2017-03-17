@@ -54,7 +54,7 @@ starter_learning_rate = 1e-2
 hs = 256
 
 batch_size = 32
-PRINT_EVERY = 100
+PRINT_EVERY = 5
 CHECKPOINT_EVERY = 5000
 TRAIN_KEEP_PROB = 0.5
 TRAIN_EMBEDDING = args.train_embedding
@@ -299,6 +299,9 @@ with tf.Session() as sess:
                 print('TRAIN_SAMPLE: ', sample(train_x[start_idx]))
                 print('TRAIN_LABEL: ', ' '.join([x for x in [valid_words[x] for x in train_y[start_idx]] if x not in ['<EOS>','<SOS>']]))
                 index = int(random.random()*10)
+                print('DEV   SAMPLE: ', sample(dev_x[index]))
+                print('DEV   LABEL: ', ' '.join([x for x in [valid_words[x] for x in dev_y[index]] if x not in ['<EOS>','<SOS>']]))
+                
                 print('\n')
             if i != 0 and i %2000*len(train_x)/batch_size == 0:
                 print("Saving checkpoint...")
