@@ -72,7 +72,7 @@ print("Loading GLOVE vectors...")
 words = glove2dict(GLOVE_LOC)
 word_counter = defaultdict(int)
 GLV_DIM = words['the'].shape[0]
-print("...loaded %d dimensional GLOVE vectors!", GLV_DIM)
+print("...loaded %d dimensional GLOVE vectors!" % GLV_DIM)
 
 def clean(text,clip_n=0):
     res = text.replace('<d>','').replace('<p>','').replace('<s>','').replace('</d>','').replace('</p>','').replace('</s>','')
@@ -180,7 +180,7 @@ else:
     embed_sub = tf.transpose(pad_embed)*input_size_placeholder
     input_summed = (tf.transpose(tf.reduce_sum(input_embed,1)) - embed_sub)
     input_summed = input_summed/tf.cast(input_size_placeholder,tf.float32)
-    input_summed = tf.reshape(tf.transpose(input_summed,(-1,GLV_DIM))
+    input_summed = tf.reshape(input_summed,(-1,GLV_DIM))
     hh0 = tf.get_variable("hh0", shape=[GLV_DIM,hs], initializer=tf.contrib.layers.xavier_initializer(),dtype=tf.float32)
     hb0 = tf.Variable(tf.constant(0.0, shape=[hs],dtype=tf.float32))
 
