@@ -53,7 +53,7 @@ LR_DECAY_AMOUNT = 0.8
 starter_learning_rate = 1e-2
 hs = 256
 
-batch_size = 32 
+batch_size = 32
 PRINT_EVERY = 100
 CHECKPOINT_EVERY = 5000
 TRAIN_KEEP_PROB = 0.5
@@ -186,7 +186,7 @@ if USE_CNN:
 else:
     state = tf.matmul(input_summed,hh0) + hb0
 
-duped_initial = tuple([state for _ in xrange(num_layer)]) 
+duped_initial = tuple([state for _ in xrange(num_layer)])
 if concat_state:
     dupe_state = tf.reshape(tf.tile(input_summed,[1,OUTPUT_MAX+1]),[-1,OUTPUT_MAX+1,GLV_DIM])
     x = tf.concat([x,dupe_state],num_layer)
@@ -285,18 +285,22 @@ with tf.Session() as sess:
                 saver.save(sess, os.path.join(LOGDIR, 'model-checkpoint-'), global_step=i)
     if args.runmode == "test":
         batch_size = 2048
-        print("Running predictions for %d data points..." % len(train_x))
+        orig_file = train_o
+        x_file = train_x
+        src_file = train
+
+        print("Running predictions for %d data points..." % len(x_file))
         predictions = []
         seen_data = {}
-        for batch_i in xrange(0,len(train_x),batch_size):
-            evaluation_data = train_x[batch_i:batch_i+batch_size]
+        for batch_i in xrange(0,len(x_file),batch_size):
+            evaluation_data = x_file[batch_i:batch_i+batch_size]
             prediction_results = sample_batch(evaluation_data)
             for i, prediction in enumerate(prediction_results):
-                if train[i][2] not in seen_data:
-                    orig_data = train_o[train[i][2]]
+                if src_file[i][2] not in seen_data:
+                    orig_data = orig_file[src_file[i][2]]
                     orig_data['prediction'] = "<d> <p> <s> " + prediction + " </s> </p> </d>"
                     predictions.append(orig_data)
-                    seen_data[train[i][2]] = 1
+                    seen_data[src_file[i][2]] = 1
         print("Done, writing json.gz file...")
         with gzip.open(predictions_file_path, 'w') as predictions_file:
             json.dump(predictions, predictions_file, sort_keys=True, indent=4, separators=(',', ': '))
