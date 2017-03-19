@@ -42,25 +42,23 @@ if args.runmode == "test":
     predictions_dir_path = os.path.join(args.evaluation_root, predictions_dir_name)
     predictions_file_path = os.path.join(predictions_dir_path, "prediction.json.gz")
 
-GLOVE_LOC = '../../data/glove/glove.6B.100d.txt'
+GLOVE_LOC = '../../data/glove/glove.6B.50d.txt'
 
 INPUT_MAX = 150
 OUTPUT_MAX = 20
-VOCAB_MAX = 5000
+VOCAB_MAX = 2000
 
 GLV_RANGE = 0.5
 LR_DECAY_AMOUNT = 0.8
-starter_learning_rate = 1e-2
-hs = 256
+starter_learning_rate = 1e-3
+hs = 8
 
 batch_size = 32
-PRINT_EVERY = 100
+PRINT_EVERY = 10
 CHECKPOINT_EVERY = 5000
 TRAIN_KEEP_PROB = 0.5
 TRAIN_EMBEDDING = args.train_embedding
-USE_CNN = args.cnn
 KERNEL_SIZE = 7
-concat_state = False
 if args.runmode == "train":
     if not os.path.exists(LOGDIR):
         os.makedirs(LOGDIR)
@@ -112,7 +110,7 @@ with open(dataset_file) as fp:
         base =  [vwd['<SOS>']] + base# + [valid_words.index('<EOS>')]
         pad_word = (OUTPUT_MAX-sen_len)
         base = base + pad_word*[vwd['<EOS>']]
-    	if pad_word == 0:
+        if pad_word == 0:
             return base,(sen_len,pad_word) 
         else:
             return base,(sen_len+1,pad_word-1)
@@ -161,67 +159,36 @@ dropout_rate = tf.placeholder(tf.float32,())
 
 embedding = tf.Variable(initial_matrix,dtype=tf.float32,trainable=TRAIN_EMBEDDING)
 input_embed = tf.nn.embedding_lookup(embedding,input_placeholder)
-if USE_CNN:
-    W1 = tf.get_variable("W1", shape=[KERNEL_SIZE,GLV_DIM,hs], initializer=tf.contrib.layers.xavier_initializer())
-    b1 = tf.Variable(tf.constant(0.0, shape=[hs]))
-    W2 = tf.get_variable("W2", shape=[1,hs,hs], initializer=tf.contrib.layers.xavier_initializer())
-    b2 = tf.Variable(tf.constant(0.0, shape=[hs]))
-    h_conv1 = tf.nn.tanh(tf.nn.conv1d(input_embed, W1, stride=1, padding='SAME') + b1)
-    h_state =  tf.nn.conv1d(h_conv1, W2, stride=1, padding='SAME') + b2
-    state = tf.reduce_max(h_state,1)
-else:
-    input_summed= tf.reduce_mean(input_embed,1)
+input_summed= tf.reduce_mean(input_embed,1)
 
-    hh0 = tf.get_variable("hh0", shape=[GLV_DIM,hs], initializer=tf.contrib.layers.xavier_initializer(),dtype=tf.float32)
-    hb0 = tf.Variable(tf.constant(0.0, shape=[hs],dtype=tf.float32))
+#out_range = tf.range(0,OUTPUT_MAX,dtype=tf.float32)
+out_range = tf.linspace(0.0,1.0,OUTPUT_MAX)
+out_range = tf.reshape(tf.tile(out_range,[tf.shape(input_placeholder)[0]]),[-1,OUTPUT_MAX,1])
+dupe_state = tf.reshape(tf.tile(input_summed,[1,OUTPUT_MAX]),[-1,OUTPUT_MAX,GLV_DIM])
+input_data  = tf.concat([out_range,dupe_state],2)
 
-num_layer = 1
-#cell = tf.contrib.rnn.MultiRNNCell([tf.contrib.rnn.GRUCell(hs) for _ in xrange(num_layer)])
-cell = tf.contrib.rnn.GRUCell(hs)
+W1 = tf.get_variable("W1", shape=[KERNEL_SIZE,GLV_DIM+1,hs], initializer=tf.contrib.layers.xavier_initializer())
+b1 = tf.Variable(tf.constant(0.0, shape=[hs]))
+W2 = tf.get_variable("W2", shape=[KERNEL_SIZE,GLV_DIM+1+hs,hs*2], initializer=tf.contrib.layers.xavier_initializer())
+b2 = tf.Variable(tf.constant(0.0, shape=[hs*2]))
+W3 = tf.get_variable("W3", shape=[KERNEL_SIZE,GLV_DIM+1+hs*3,3*hs], initializer=tf.contrib.layers.xavier_initializer())
+b3 = tf.Variable(tf.constant(0.0, shape=[3*hs]))
 
-looked_up = tf.nn.embedding_lookup(embedding,labels_placeholder)
-x = tf.reshape(looked_up,[-1,OUTPUT_MAX+1,GLV_DIM])
+W4 = tf.get_variable("W4", shape=[KERNEL_SIZE,hs*3,3*hs], initializer=tf.contrib.layers.xavier_initializer())
+b4 = tf.Variable(tf.constant(0.0, shape=[3*hs]))
+W5 = tf.get_variable("W5", shape=[KERNEL_SIZE,hs*3,3*hs], initializer=tf.contrib.layers.xavier_initializer())
+b5 = tf.Variable(tf.constant(0.0, shape=[3*hs]))
+W6 = tf.get_variable("W6", shape=[KERNEL_SIZE,6*hs,VOCAB_SIZE], initializer=tf.contrib.layers.xavier_initializer())
+b6 = tf.Variable(tf.constant(0.0, shape=[VOCAB_SIZE]))
 
-U = tf.get_variable("U", shape=(hs,VOCAB_SIZE), initializer=tf.contrib.layers.xavier_initializer())
-b2 = tf.get_variable("b2", shape=(VOCAB_SIZE,), initializer=tf.constant_initializer(0.0))
-if USE_CNN:
-    pass
-else:
-    state = tf.matmul(input_summed,hh0) + hb0
+h_conv1 = tf.nn.elu(tf.nn.conv1d(input_data, W1, stride=1, padding='SAME') + b1)
+h_conv2 = tf.nn.elu(tf.nn.conv1d(tf.concat([h_conv1,input_data],2)           , W2, stride=1, padding='SAME') + b2)
+h_conv3 = tf.nn.elu(tf.nn.conv1d(tf.concat([h_conv1,h_conv2,input_data],2)   , W3, stride=1, padding='SAME') + b3)
+h_conv4 = tf.nn.elu(tf.nn.conv1d(h_conv3                                     , W4, stride=1, padding='SAME') + b4)
+h_conv5 = tf.nn.elu(tf.nn.conv1d(h_conv4                                     , W5, stride=1, padding='SAME') + b5)
+h_conv6 = tf.nn.elu(tf.nn.conv1d(tf.concat([h_conv3,h_conv4],2)              , W6, stride=1, padding='SAME') + b6)
 
-duped_initial = tuple([state for _ in xrange(num_layer)])
-if concat_state:
-    dupe_state = tf.reshape(tf.tile(input_summed,[1,OUTPUT_MAX+1]),[-1,OUTPUT_MAX+1,GLV_DIM])
-    x = tf.concat([x,dupe_state],num_layer)
-
-#outputs, states = tf.nn.dynamic_rnn(cell, x, initial_state=state,dtype=tf.float32)
-preds = []
-
-
-#state = (state,)
-
-with tf.variable_scope("RNN"):
-    for time_step in range(OUTPUT_MAX):
-        if time_step >= 1:
-            tf.get_variable_scope().reuse_variables()
-        output, state = cell(x[:,time_step,:], state)
-        pred = tf.matmul(output,U) + b2
-        #print(pred.get_shape())
-        vocab_words = tf.argmax(pred,axis=1)
-        look_up_out = tf.nn.embedding_lookup(embedding,vocab_words)
-        #print(look_up_out.get_shape())
-        state =  state - (tf.matmul(look_up_out,hh0) + hb0)
-
-        preds.append(pred)
-        ### END YOUR CODE
-
-preds = tf.stack(preds)
-preds = tf.transpose(preds,perm=[1,0,2])
-
-#outputs_batchword = tf.reshape(outputs[:,:OUTPUT_MAX,:],[-1,hs])
-#out_drop = tf.nn.dropout(outputs_batchword,dropout_rate)
-#pred_batchword = tf.matmul(out_drop,U) + b2
-#preds = tf.reshape(pred_batchword,[-1,OUTPUT_MAX,VOCAB_SIZE])
+preds = h_conv6
 
 ce = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=preds,labels=labels_placeholder[:,1:])
 loss = tf.reduce_mean(tf.boolean_mask(ce,mask_placeholder))
@@ -229,21 +196,22 @@ tf.summary.scalar('loss', loss)
 
 optimizer = tf.train.AdamOptimizer(learning_rate)
 gvs = optimizer.compute_gradients(loss)
-capped_gvs = [((tf.clip_by_value(grad, -1., 1.) if grad != None else None), var)  for grad, var in gvs]
-train_step = optimizer.apply_gradients(capped_gvs,global_step=global_step)
+#capped_gvs = [((tf.clip_by_value(grad, -1., 1.) if grad != None else None), var)  for grad, var in gvs]
+train_step = optimizer.apply_gradients(gvs,global_step=global_step)
 
 
 def sample(context_vector):
     sentence = []
-    for i in xrange(OUTPUT_MAX):
-        x = sent_to_idxs(' '.join(sentence))[0]
-        feed_dict = {
-            input_placeholder: np.array(context_vector).reshape([1,-1]),
-            labels_placeholder: np.array(x).reshape([1,-1]),
-            dropout_rate: 1.0
-        }
-        probs = np.squeeze(preds.eval(feed_dict=feed_dict))
-        new_word = valid_words[np.argmax(probs[i,:])]
+
+    feed_dict = {
+        input_placeholder: np.array(context_vector).reshape([1,-1]),
+        #labels_placeholder: np.array(x).reshape([1,-1]),
+        dropout_rate: 1.0
+    }
+    probs = np.squeeze(preds.eval(feed_dict=feed_dict))
+    for idx in np.argmax(probs,axis=1):
+        #print(probs.shape)
+        new_word = valid_words[idx]
         if new_word != '<EOS>':
             sentence.append(new_word)
         else:
@@ -300,7 +268,10 @@ with tf.Session() as sess:
             if i % PRINT_EVERY == 0:
                 print(i,bl)
                 print('TRAIN_SAMPLE: ',sample(train_x[start_idx]))
-                print('TRAIN_LABEL: ',' '.join([x for x in [valid_words[x] for x in train_y[start_idx]] if x not in ['<EOS>','<SOS>']]))
+                print('TRAIN_LABEL1: ',' '.join([x for x in [valid_words[x] for x in train_y[start_idx]] if x not in ['<EOS>','<SOS>']]))
+                print('TRAIN_LABEL2: ',' '.join([x for x,m in zip([valid_words[x] for x in train_y[start_idx][1:]],mask[0]) if m]))
+                print('TRAIN_LABEL2: ',' '.join([x for x,m in zip([valid_words[x] for x in train_y[start_idx][1:]],mask[0]) if True]))
+
                 index = int(random.random()*(len(dev_y)-1))
                 print('DEV_SAMPLE: ',sample(dev_x[index]))
                 print('DEV_LABEL: ',' '.join([x for x in [valid_words[x] for x in dev_y[index]] if x not in ['<EOS>','<SOS>']]))

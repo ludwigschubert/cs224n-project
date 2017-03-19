@@ -44,16 +44,16 @@ if args.runmode == "test":
     predictions_dir_path = os.path.join(args.evaluation_root, predictions_dir_name)
     predictions_file_path = os.path.join(predictions_dir_path, "prediction.json.gz")
 
-GLOVE_LOC = '../../data/glove/glove.6B.50d.txt'
+GLOVE_LOC = '../../data/glove/glove.6B.100d.txt'
 
 INPUT_MAX = 150
 OUTPUT_MAX = 15
-VOCAB_MAX = 5000
+VOCAB_MAX = 10000
 
 GLV_RANGE = 0.5
 LR_DECAY_AMOUNT = 0.8
-starter_learning_rate = 1e-1
-hs = 128
+starter_learning_rate = 1e-2
+hs = 256
 
 batch_size = 32
 PRINT_EVERY = 100
@@ -114,7 +114,10 @@ with open(dataset_file) as fp:
         base =  [vwd['<SOS>']] + base# + [valid_words.index('<EOS>')]
         pad_word = (OUTPUT_MAX-sen_len)
         base = base + pad_word*[vwd['<EOS>']]
-        return base,(sen_len,pad_word)
+        if pad_word == 0:
+            return base,(sen_len,pad_word) 
+        else:
+            return base,(sen_len+1,pad_word-1)
     def sent_to_idxs_nopad(sentence):
         base =  [vwd[word] for word in sentence.split()]
         return base
@@ -154,7 +157,7 @@ VOCAB_SIZE = len(valid_words)
 learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step, len(train_x)/batch_size, LR_DECAY_AMOUNT, staircase=True)
 
 input_placeholder = tf.placeholder(tf.int32)
-mask_placeholder = tf.placeholder(tf.float32,(None,OUTPUT_MAX))
+mask_placeholder = tf.placeholder(tf.bool,(None,OUTPUT_MAX))
 labels_placeholder = tf.placeholder(tf.int32,(None,OUTPUT_MAX+1))
 dropout_rate = tf.placeholder(tf.float32,())
 
@@ -217,7 +220,7 @@ with tf.variable_scope("RNN"):
         #print(look_up_out.get_shape())
         correct_running_loss = correct_running_loss - x[:,time_step+1,:]
         context =  context - look_up_out
-        diffs.append(tf.nn.l2_loss(correct_running_loss - context))
+        diffs.append(tf.nn.l2_loss(look_up_out - x[:,time_step+1,:]))
         preds.append(pred)
         ### END YOUR CODE
 
@@ -231,7 +234,7 @@ diffs = tf.stack(diffs)
 #preds = tf.reshape(pred_batchword,[-1,OUTPUT_MAX,VOCAB_SIZE])
 
 ce = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=preds,labels=labels_placeholder[:,1:])
-loss = tf.reduce_mean(mask_placeholder * ce) + args.l2*tf.reduce_mean(mask_placeholder*diffs)
+loss = tf.reduce_mean(tf.boolean_mask(ce,mask_placeholder)) + args.l2*tf.reduce_mean(mask_placeholder*diffs)
 tf.summary.scalar('loss', loss)
 
 optimizer = tf.train.AdamOptimizer(learning_rate)
@@ -290,7 +293,7 @@ with tf.Session() as sess:
         for i in range(data_size*10):
             start_idx = (i*batch_size)%data_size
             end_idx = start_idx+batch_size
-            mask = np.array([np.array([1.0]*x[0] + [0.0]*x[1]) for x in train_len[start_idx:end_idx]])
+            mask = np.array([np.array([True]*x[0] + [False]*x[1]) for x in train_len[start_idx:end_idx]])
             train_sizes = [len(x) for x in train_x[start_idx:end_idx]]
             train_mat = np.zeros(shape=(len(train_sizes),max(train_sizes)))
             for idx,row in enumerate(train_x[start_idx:end_idx]):

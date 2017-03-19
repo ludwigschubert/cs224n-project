@@ -112,7 +112,10 @@ with open(dataset_file) as fp:
         base =  [vwd['<SOS>']] + base# + [valid_words.index('<EOS>')]
         pad_word = (OUTPUT_MAX-sen_len)
         base = base + pad_word*[vwd['<EOS>']]
-        return base,(sen_len,pad_word)
+        if pad_word == 0:
+            return base,(sen_len,pad_word) 
+        else:
+            return base,(sen_len+1,pad_word-1)
     def sent_to_idxs_nopad(sentence):
         base =  [vwd[word] for word in sentence.split()]
         return base
