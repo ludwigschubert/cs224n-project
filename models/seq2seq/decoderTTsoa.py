@@ -152,7 +152,7 @@ VOCAB_SIZE = len(valid_words)
 learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step, len(train_x)/batch_size, LR_DECAY_AMOUNT, staircase=True)
 
 input_placeholder = tf.placeholder(tf.int32)
-mask_placeholder = tf.placeholder(tf.float32,(None,OUTPUT_MAX))
+mask_placeholder = tf.placeholder(tf.bool,(None,OUTPUT_MAX))
 labels_placeholder = tf.placeholder(tf.int32,(None,OUTPUT_MAX+1))
 dropout_rate = tf.placeholder(tf.float32,())
 
@@ -199,7 +199,7 @@ pred_batchword = tf.matmul(out_drop,U) + b2
 preds = tf.reshape(pred_batchword,[-1,OUTPUT_MAX,VOCAB_SIZE])
 
 ce = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=preds,labels=labels_placeholder[:,1:])
-loss = tf.reduce_mean(mask_placeholder * ce)
+loss = tf.reduce_mean(tf.boolean_mask(ce,mask_placeholder))
 tf.summary.scalar('loss', loss)
 
 optimizer = tf.train.AdamOptimizer(learning_rate)
@@ -258,7 +258,7 @@ with tf.Session() as sess:
         for i in range(data_size*10):
             start_idx = (i*batch_size)%data_size
             end_idx = start_idx+batch_size
-            mask = np.array([np.array([1.0]*x[0] + [0.0]*x[1]) for x in train_len[start_idx:end_idx]])
+            mask = np.array([np.array([True]*x[0] + [False]*x[1]) for x in train_len[start_idx:end_idx]])
             train_sizes = [len(x) for x in train_x[start_idx:end_idx]]
             train_mat = np.zeros(shape=(len(train_sizes),max(train_sizes)))
             for idx,row in enumerate(train_x[start_idx:end_idx]):
