@@ -234,7 +234,7 @@ diffs = tf.stack(diffs)
 #preds = tf.reshape(pred_batchword,[-1,OUTPUT_MAX,VOCAB_SIZE])
 
 ce = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=preds,labels=labels_placeholder[:,1:])
-loss = tf.reduce_mean(tf.boolean_mask(ce,mask_placeholder)) + args.l2*tf.reduce_mean(mask_placeholder*diffs)
+loss = tf.reduce_mean(tf.boolean_mask(ce,mask_placeholder)) + args.l2*tf.reduce_mean(tf.boolean_mask(diffs,mask_placeholder))
 tf.summary.scalar('loss', loss)
 
 optimizer = tf.train.AdamOptimizer(learning_rate)
