@@ -1,0 +1,1 @@
+{"ROUGE-L-F": 0.08202, "ROUGE-2-F": 0.00854, "ROUGE-1-F": 0.08202, "dataset_tested": "squad-identity-dev", "ROUGE-L-P": 0.08862, "ROUGE-2-P": 0.00876, "ROUGE-2-R": 0.00839, "model": "textsum", "dataset_trained": "squad-identity", "ROUGE-1-R": 0.07999, "ROUGE-1-P": 0.08862, "ROUGE-L-R": 0.07999}
