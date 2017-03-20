@@ -23,9 +23,10 @@ file_name = 'data.json*'
 file_path = os.path.join(args.dataset_folder, file_name)
 file_path = glob(file_path)[0]
 
-def parse_json(json):
+data = defaultdict(list)
+
+def parse_json(file_object):
   dataset = json.load(file_object)
-  data = defaultdict(list)
   for entry in dataset:
     body = entry['data']
     for label in entry['label']:
@@ -35,11 +36,10 @@ def parse_json(json):
 print("Loading dataset...")
 if os.path.splitext(file_path)[-1] == "gz":
   with gzip.open(file_path,'r') as file_object:
-
-    parse_json(json)
+    parse_json(file_object)
 else:
   with open(file_path,'r') as file_object:
-    parse_json(json)
+    parse_json(file_object)
 
 
 # write data files

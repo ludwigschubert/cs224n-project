@@ -7,8 +7,8 @@ from glob import glob
 
 evaluation_filename = "prediction.json.gz"
 
-glove_path = set(['../../data/glove/']) # ignore glove "dataset"
-dataset_paths = list( set(glob("../../data/*/")) - glove_path )
+ignored_paths = set(['../../data/glove/', '../../data/sentiment-treebank/']) # ignore e.g glove "dataset"
+dataset_paths = list( set(glob("../../data/*/")) - ignored_paths )
 dataset_names = [ basename(normpath((path))) for path in dataset_paths ]
 
 print("Predicting on " + ", ".join(dataset_names))
@@ -21,14 +21,13 @@ for dataset_path, dataset_name in zip(dataset_paths, dataset_names):
       json_data = dataset_file.read()
       data = json.loads(json_data)
       for example in data:
-        parts = re.match(r"^<d> <p> <s>(.*)<\/s>", example['data'])
-        if parts:
-          matched = parts.group(1)[:-1]
-          example['prediction'] = matched + " </p> </d>"
+        parts = example['data'].split('</s>')
+        example['prediction'] = parts[0] + " </s> </p> </d>"
+        del example['data']
+        del example['set']
     predictions_folder_path = "../../evaluation/first-sentence_" + dataset_name
     if not exists(predictions_folder_path):
       makedirs(predictions_folder_path)
     predictions_file_path = join(predictions_folder_path, evaluation_filename)
     with gzip.open(predictions_file_path, 'w') as predictions_file:
       predictions_file.write( json.dumps(data) )
-

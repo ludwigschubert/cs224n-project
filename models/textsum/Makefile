@@ -39,12 +39,11 @@ eval: data/vocab data/dev
 	  --mode=decode \
 	  --article_key=article \
 	  --abstract_key=abstract \
-	  --data_path=data-squad/train \
-	  --vocab_path=data-nips/vocab \
-	  --log_root=train-nips-abstract-title \
-	  --train_dir=train-nips-abstract-title \
-	  --decode_dir=../../evaluation/textsum_nips-abstract-title_squad \
-	  --beam_size=8
+	  --data_path=data/dev \
+	  --vocab_path=data/vocab \
+	  --log_root=squad-identity \
+	  --decode_dir=../../evaluation/textsum_squad-identity_squad-identity-dev \
+	  --beam_size=2
 
 .PHONY: clean
 clean:
