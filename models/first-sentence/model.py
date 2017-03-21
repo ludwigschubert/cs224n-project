@@ -7,7 +7,7 @@ from glob import glob
 
 evaluation_filename = "prediction.json.gz"
 
-ignored_paths = set(['../../data/glove/', '../../data/sentiment-treebank/']) # ignore e.g glove "dataset"
+ignored_paths = set(['../../data/glove/', '../../data/sentiment-treebank/', '../../data/nips-article-abstract/']) # ignore e.g glove "dataset"
 dataset_paths = list( set(glob("../../data/*/")) - ignored_paths )
 dataset_names = [ basename(normpath((path))) for path in dataset_paths ]
 

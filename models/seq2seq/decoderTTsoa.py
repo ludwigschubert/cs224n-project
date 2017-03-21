@@ -22,7 +22,7 @@ parser.add_argument('--output_root', dest='output_root', type=str, default="")
 parser.add_argument('--evaluation_root', dest='evaluation_root', type=str, default="../../evaluation")
 args = parser.parse_args()
 
-log_components = ["train"]
+log_components = ["train-soa"]
 if args.runmode == "train":
     log_components += [args.dataset_name]
 elif args.runmode == "test":
@@ -38,7 +38,7 @@ dataset_file = os.path.join("../../data", args.dataset_name, "data.json")
 print("Runmode %s on dataset %s" % (args.runmode, args.dataset_name))
 
 if args.runmode == "test":
-    predictions_dir_name = "_".join(["seq2seq", LOGDIR, args.trained_on, args.dataset_name])
+    predictions_dir_name = "_".join(["seq2seq-soa", LOGDIR, args.trained_on, args.dataset_name])
     predictions_dir_path = os.path.join(args.evaluation_root, predictions_dir_name)
     predictions_file_path = os.path.join(predictions_dir_path, "prediction.json.gz")
 
@@ -113,7 +113,7 @@ with open(dataset_file) as fp:
         pad_word = (OUTPUT_MAX-sen_len)
         base = base + pad_word*[vwd['<EOS>']]
         if pad_word == 0:
-            return base,(sen_len,pad_word) 
+            return base,(sen_len,pad_word)
         else:
             return base,(sen_len+1,pad_word-1)
     def sent_to_idxs_nopad(sentence):
@@ -142,7 +142,10 @@ def try_restoring_checkpoint(session, saver):
       exit(1)
 
     if not (ckpt_state and ckpt_state.model_checkpoint_path):
-      print('No model to eval yet at ', LOGDIR)
+      if args.runmode == "test":
+        print('No model checkpoint found to evaluate! Looked at: ', LOGDIR)
+        exit(1)
+      print('No model checkpoint found at ', LOGDIR)
       return
 
     print('Loading checkpoint ', ckpt_state.model_checkpoint_path)
@@ -288,8 +291,8 @@ with tf.Session() as sess:
                 saver.save(sess, os.path.join(LOGDIR, 'model-checkpoint-'), global_step=i)
     if args.runmode == "test":
         batch_size = 2048
-        orig_file = train_o
-        x_file = train_x
+        orig_file = train_o # change for eval on same model as trained on
+        x_file = train_x[:1000]
         src_file = train
 
         print("Running predictions for %d data points..." % len(x_file))

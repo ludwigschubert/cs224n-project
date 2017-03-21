@@ -39,10 +39,10 @@ eval: data/vocab data/dev
 	  --mode=decode \
 	  --article_key=article \
 	  --abstract_key=abstract \
-	  --data_path=data/dev \
-	  --vocab_path=data/vocab \
-	  --log_root=squad-identity \
-	  --decode_dir=../../evaluation/textsum_squad-identity_squad-identity-dev \
+	  --data_path=data-nips/dev \
+	  --vocab_path=data-nips/vocab \
+	  --log_root=log-squad \
+	  --decode_dir=../../evaluation/textsum_squad_nips \
 	  --beam_size=2
 
 .PHONY: clean

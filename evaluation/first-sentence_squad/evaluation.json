@@ -1,1 +1,1 @@
-{"ROUGE-L-F": 0.08161, "ROUGE-2-F": 0.01531, "ROUGE-1-F": 0.08161, "dataset_tested": "squad", "ROUGE-L-P": 0.0468, "ROUGE-2-P": 0.00877, "ROUGE-2-R": 0.07186, "model": "first-sentence", "dataset_trained": "squad", "ROUGE-1-R": 0.37242, "ROUGE-1-P": 0.0468, "ROUGE-L-R": 0.37242}
+{"ROUGE-L-F": 0.03687, "ROUGE-2-F": 2e-05, "ROUGE-1-F": 0.03687, "dataset_tested": "squad", "ROUGE-L-P": 0.02529, "ROUGE-2-P": 1e-05, "ROUGE-2-R": 5e-05, "model": "first-sentence", "dataset_trained": "squad", "ROUGE-1-R": 0.07901, "ROUGE-1-P": 0.02529, "ROUGE-L-R": 0.07901}

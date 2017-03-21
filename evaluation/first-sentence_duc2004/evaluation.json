@@ -1,1 +1,1 @@
-{"ROUGE-L-F": 0.02276, "ROUGE-2-F": 0.00557, "ROUGE-1-F": 0.02276, "dataset_tested": "duc2004", "ROUGE-L-P": 0.01237, "ROUGE-2-P": 0.00303, "ROUGE-2-R": 0.07565, "model": "first-sentence", "dataset_trained": "duc2004", "ROUGE-1-R": 0.2993, "ROUGE-1-P": 0.01237, "ROUGE-L-R": 0.2993}
+{"ROUGE-L-F": 0.00761, "ROUGE-2-F": 0.00095, "ROUGE-1-F": 0.00761, "dataset_tested": "duc2004", "ROUGE-L-P": 0.00518, "ROUGE-2-P": 0.00064, "ROUGE-2-R": 0.00191, "model": "first-sentence", "dataset_trained": "duc2004", "ROUGE-1-R": 0.01491, "ROUGE-1-P": 0.00518, "ROUGE-L-R": 0.01491}

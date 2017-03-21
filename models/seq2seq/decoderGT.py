@@ -38,7 +38,7 @@ GLV_DIM = words['the'].shape[0]
 
 def clean(text,clip_n=0):
     res = text.replace('<d>','').replace('<p>','').replace('<s>','').replace('</d>','').replace('</p>','').replace('</s>','')
-    
+
     r2 = []
     for word in res.split():
         if word not in words:
@@ -94,7 +94,7 @@ with open(DATASET) as fp:
     test_y = [sent_to_idxs(x[1])[0] for x in test]
     test_len = [sent_to_idxs(x[1])[1] for x in test]
 
-    
+
 #train_x[0],train_y[0]
 
 
@@ -112,7 +112,7 @@ dropout_rate = tf.placeholder(tf.float32,())
 
 preds = [] # Predicted output at each timestep should go here!
 
-hh0 = tf.get_variable("hh0", shape=[GLV_DIM,hs], initializer=tf.contrib.layers.xavier_initializer(),dtype=tf.float32) 
+hh0 = tf.get_variable("hh0", shape=[GLV_DIM,hs], initializer=tf.contrib.layers.xavier_initializer(),dtype=tf.float32)
 hb0 = tf.Variable(tf.constant(0.0, shape=[hs],dtype=tf.float32))
 cell = tf.contrib.rnn.GRUCell(hs)
 
@@ -165,7 +165,7 @@ with tf.Session() as sess:
     #summary_writer = tf.summary.FileWriter('./train', sess.graph)
     #saver =  tf.train.Saver()
     sess.run(tf.global_variables_initializer())
-    data_size = len(train_x)
+    data_size = len(test_x)
     for i in range(data_size*10):
         # cost, label,mask,data_size
         start_idx = (i*batch_size)%data_size
@@ -177,8 +177,8 @@ with tf.Session() as sess:
         #print(np.array(train_x[start_idx:end_idx]).shape)
 
         feed_dict = {
-            input_placeholder: train_x[start_idx:end_idx],
-            labels_placeholder: train_y[start_idx:end_idx],
+            input_placeholder: test_x[start_idx:end_idx],
+            labels_placeholder: test_y[start_idx:end_idx],
             mask_placeholder: mask,
             dropout_rate: TRAIN_KEEP_PROB
         }
